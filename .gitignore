@@ -51,3 +51,6 @@ callgrind.out.*
 # IDE workspace configurations
 /.idea/
 /.vscode/
+
+# Tracing of memory management
+debug.log
