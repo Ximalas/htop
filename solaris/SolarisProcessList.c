@@ -58,7 +58,7 @@ static void SolarisProcessList_updateCPUcount(ProcessList* super) {
 
    if (s != super->existingCPUs) {
       if (s == 1) {
-         spl->cpus = xRealloc(spl->cpus, sizeof(CPUData));
+         spl->cpus = xRealloc(spl->cpus, sizeof(CPUData), __func__, __FILE__, __LINE__);
          spl->cpus[0].online = true;
       } else {
          spl->cpus = xReallocArray(spl->cpus, s + 1, sizeof(CPUData));
@@ -90,7 +90,7 @@ static void SolarisProcessList_updateCPUcount(ProcessList* super) {
 }
 
 ProcessList* ProcessList_new(UsersTable* usersTable, Hashtable* dynamicMeters, Hashtable* dynamicColumns, Hashtable* pidMatchList, uid_t userId) {
-   SolarisProcessList* spl = xCalloc(1, sizeof(SolarisProcessList));
+   SolarisProcessList* spl = xCalloc(1, sizeof(SolarisProcessList), __func__, __FILE__, __LINE__);
    ProcessList* pl = (ProcessList*) spl;
    ProcessList_init(pl, Class(SolarisProcess), usersTable, dynamicMeters, dynamicColumns, pidMatchList, userId);
 
@@ -252,10 +252,10 @@ static inline void SolarisProcessList_scanMemoryInfo(ProcessList* pl) {
    // Part 2 - swap
    nswap = swapctl(SC_GETNSWP, NULL);
    if (nswap > 0) {
-      sl = xMalloc((nswap * sizeof(swapent_t)) + sizeof(int));
+      sl = xMalloc((nswap * sizeof(swapent_t)) + sizeof(int), __func__, __FILE__, __LINE__);
    }
    if (sl != NULL) {
-      spathbase = xMalloc( nswap * MAXPATHLEN );
+      spathbase = xMalloc(nswap * MAXPATHLEN, __func__, __FILE__, __LINE__);
    }
    if (spathbase != NULL) {
       spath = spathbase;
@@ -274,8 +274,8 @@ static inline void SolarisProcessList_scanMemoryInfo(ProcessList* pl) {
          totalfree += swapdev->ste_free;
       }
    }
-   free(spathbase);
-   free(sl);
+   xFree(spathbase, __func__, __FILE__, __LINE__);
+   xFree(sl, __func__, __FILE__, __LINE__);
    pl->totalSwap = totalswap * pageSizeKB;
    pl->usedSwap  = pl->totalSwap - (totalfree * pageSizeKB);
 }
@@ -330,11 +330,11 @@ static inline void SolarisProcessList_scanZfsArcstats(ProcessList* pl) {
 void ProcessList_delete(ProcessList* pl) {
    SolarisProcessList* spl = (SolarisProcessList*) pl;
    ProcessList_done(pl);
-   free(spl->cpus);
+   xFree(spl->cpus, __func__, __FILE__, __LINE__);
    if (spl->kd) {
       kstat_close(spl->kd);
    }
-   free(spl);
+   xFree(spl, __func__, __FILE__, __LINE__);
 }
 
 static void SolarisProcessList_updateExe(pid_t pid, Process* proc) {
@@ -414,7 +414,7 @@ static int SolarisProcessList_walkproc(psinfo_t* _psinfo, lwpsinfo_t* _lwpsinfo,
    proc->tty_nr             = _psinfo->pr_ttydev;
    const char* name = (_psinfo->pr_ttydev != PRNODEV) ? ttyname(_psinfo->pr_ttydev) : NULL;
    if (!name) {
-      free(proc->tty_name);
+      xFree(proc->tty_name, __func__, __FILE__, __LINE__);
       proc->tty_name = NULL;
    } else {
       free_and_xStrdup(&proc->tty_name, name);

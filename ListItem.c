@@ -20,8 +20,8 @@ in the source distribution for its full text.
 
 static void ListItem_delete(Object* cast) {
    ListItem* this = (ListItem*)cast;
-   free(this->value);
-   free(this);
+   xFree(this->value, __func__, __FILE__, __LINE__);
+   xFree(this, __func__, __FILE__, __LINE__);
 }
 
 static void ListItem_display(const Object* cast, RichString* out) {
@@ -40,7 +40,7 @@ static void ListItem_display(const Object* cast, RichString* out) {
 
 ListItem* ListItem_new(const char* value, int key) {
    ListItem* this = AllocThis(ListItem);
-   this->value = xStrdup(value);
+   this->value = xStrdup(value, __func__, __FILE__, __LINE__);
    this->key = key;
    this->moving = false;
    return this;
@@ -50,7 +50,7 @@ void ListItem_append(ListItem* this, const char* text) {
    size_t oldLen = strlen(this->value);
    size_t textLen = strlen(text);
    size_t newLen = oldLen + textLen;
-   this->value = xRealloc(this->value, newLen + 1);
+   this->value = xRealloc(this->value, newLen + 1, __func__, __FILE__, __LINE__);
    memcpy(this->value + oldLen, text, textLen);
    this->value[newLen] = '\0';
 }

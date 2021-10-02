@@ -46,14 +46,14 @@ typedef struct MaskItem_ {
 
 static void MaskItem_delete(Object* cast) {
    MaskItem* this = (MaskItem*) cast;
-   free(this->text);
-   free(this->indent);
+   xFree(this->text, __func__, __FILE__, __LINE__);
+   xFree(this->indent, __func__, __FILE__, __LINE__);
    Vector_delete(this->children);
    #ifdef HAVE_LIBHWLOC
    if (this->ownCpuset)
       hwloc_bitmap_free(this->cpuset);
    #endif
-   free(this);
+   xFree(this, __func__, __FILE__, __LINE__);
 }
 
 static void MaskItem_display(const Object* cast, RichString* out) {
@@ -89,8 +89,8 @@ static const ObjectClass MaskItem_class = {
 
 static MaskItem* MaskItem_newMask(const char* text, const char* indent, hwloc_bitmap_t cpuset, bool owner) {
    MaskItem* this = AllocThis(MaskItem);
-   this->text = xStrdup(text);
-   this->indent = xStrdup(indent); /* nonnull for tree node */
+   this->text = xStrdup(text, __func__, __FILE__, __LINE__);
+   this->indent = xStrdup(indent, __func__, __FILE__, __LINE__); /* nonnull for tree node */
    this->value = 0;
    this->ownCpuset = owner;
    this->cpuset = cpuset;
@@ -103,7 +103,7 @@ static MaskItem* MaskItem_newMask(const char* text, const char* indent, hwloc_bi
 
 static MaskItem* MaskItem_newSingleton(const char* text, int cpu, bool isSet) {
    MaskItem* this = AllocThis(MaskItem);
-   this->text = xStrdup(text);
+   this->text = xStrdup(text, __func__, __FILE__, __LINE__);
    this->indent = NULL; /* not a tree node */
    this->sub_tree = 0;
    this->children = Vector_new(Class(MaskItem), true, DEFAULT_SIZE);
@@ -143,7 +143,7 @@ static void AffinityPanel_delete(Object* cast) {
    hwloc_bitmap_free(this->workCpuset);
    MaskItem_delete((Object*) this->topoRoot);
    #endif
-   free(this);
+   xFree(this, __func__, __FILE__, __LINE__);
 }
 
 #ifdef HAVE_LIBHWLOC

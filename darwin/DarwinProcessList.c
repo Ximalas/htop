@@ -74,7 +74,7 @@ static struct kinfo_proc* ProcessList_getKInfoProcs(size_t* count) {
          CRT_fatalError("Unable to get size of kproc_infos");
       }
 
-      processes = xRealloc(processes, size);
+      processes = xRealloc(processes, size, __func__, __FILE__, __LINE__);
 
       if (sysctl(mib, 4, processes, &size, NULL, 0) == 0) {
          *count = size / sizeof(struct kinfo_proc);
@@ -89,7 +89,7 @@ static struct kinfo_proc* ProcessList_getKInfoProcs(size_t* count) {
 }
 
 ProcessList* ProcessList_new(UsersTable* usersTable, Hashtable* dynamicMeters, Hashtable* dynamicColumns, Hashtable* pidMatchList, uid_t userId) {
-   DarwinProcessList* this = xCalloc(1, sizeof(DarwinProcessList));
+   DarwinProcessList* this = xCalloc(1, sizeof(DarwinProcessList), __func__, __FILE__, __LINE__);
 
    ProcessList_init(&this->super, Class(DarwinProcess), usersTable, dynamicMeters, dynamicColumns, pidMatchList, userId);
 
@@ -117,7 +117,7 @@ ProcessList* ProcessList_new(UsersTable* usersTable, Hashtable* dynamicMeters, H
 
 void ProcessList_delete(ProcessList* this) {
    ProcessList_done(this);
-   free(this);
+   xFree(this, __func__, __FILE__, __LINE__);
 }
 
 void ProcessList_goThroughEntries(ProcessList* super, bool pauseProcessUpdate) {
@@ -189,7 +189,7 @@ void ProcessList_goThroughEntries(ProcessList* super, bool pauseProcessUpdate) {
       }
    }
 
-   free(ps);
+   xFree(ps, __func__, __FILE__, __LINE__);
 }
 
 bool ProcessList_isCPUonline(const ProcessList* super, unsigned int id) {

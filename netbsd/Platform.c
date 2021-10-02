@@ -298,13 +298,13 @@ char* Platform_getProcessEnv(pid_t pid) {
       return NULL;
    }
 
-   env = xMalloc(capacity);
+   env = xMalloc(capacity, __func__, __FILE__, __LINE__);
    for (char** p = ptr; *p; p++) {
       size_t len = strlen(*p) + 1;
 
       if (size + len > capacity) {
          capacity *= 2;
-         env = xRealloc(env, capacity);
+         env = xRealloc(env, capacity, __func__, __FILE__, __LINE__);
       }
 
       String_safeStrncpy(env + size, *p, len);
@@ -313,7 +313,7 @@ char* Platform_getProcessEnv(pid_t pid) {
 
    if (size < 2 || env[size - 1] || env[size - 2]) {
       if (size + 2 < capacity)
-         env = xRealloc(env, capacity + 2);
+         env = xRealloc(env, capacity + 2, __func__, __FILE__, __LINE__);
       env[size] = 0;
       env[size + 1] = 0;
    }
@@ -344,11 +344,11 @@ bool Platform_getDiskIO(DiskIOData* data) {
          CRT_fatalError("Unable to get size of io_sysctl");
 
       if (size == 0) {
-         free(iostats);
+         xFree(iostats, __func__, __FILE__, __LINE__);
          return false;
       }
 
-      iostats = xRealloc(iostats, size);
+      iostats = xRealloc(iostats, size, __func__, __FILE__, __LINE__);
 
       errno = 0;
 
@@ -380,7 +380,7 @@ bool Platform_getDiskIO(DiskIOData* data) {
    data->totalBytesWritten = bytesWriteSum;
    data->totalMsTimeSpend = busyTimeSum / 1000;
 
-   free(iostats);
+   xFree(iostats, __func__, __FILE__, __LINE__);
    return true;
 }
 

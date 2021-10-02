@@ -426,14 +426,14 @@ void Process_makeCommandStr(Process* this) {
 
    /* Check for any changed fields since we last built this string */
    if (mc->cmdlineChanged || mc->commChanged || mc->exeChanged) {
-      free(mc->str);
+      xFree(mc->str, __func__, __FILE__, __LINE__);
       /* Accommodate the column text, two field separators and terminating NUL */
       size_t maxLen = 2 * SEPARATOR_LEN + 1;
       maxLen += this->cmdline ? strlen(this->cmdline) : strlen("(zombie)");
       maxLen += this->procComm ? strlen(this->procComm) : 0;
       maxLen += this->procExe ? strlen(this->procExe) : 0;
 
-      mc->str = xCalloc(1, maxLen);
+      mc->str = xCalloc(1, maxLen, __func__, __FILE__, __LINE__);
    }
 
    /* Preserve the settings used in this run */
@@ -951,12 +951,12 @@ void Process_display(const Object* cast, RichString* out) {
 
 void Process_done(Process* this) {
    assert (this != NULL);
-   free(this->cmdline);
-   free(this->procComm);
-   free(this->procExe);
-   free(this->procCwd);
-   free(this->mergedCommand.str);
-   free(this->tty_name);
+   xFree(this->cmdline, __func__, __FILE__, __LINE__);
+   xFree(this->procComm, __func__, __FILE__, __LINE__);
+   xFree(this->procExe, __func__, __FILE__, __LINE__);
+   xFree(this->procCwd, __func__, __FILE__, __LINE__);
+   xFree(this->mergedCommand.str, __func__, __FILE__, __LINE__);
+   xFree(this->tty_name, __func__, __FILE__, __LINE__);
 }
 
 /* This function returns the string displayed in Command column, so that sorting
@@ -1175,8 +1175,8 @@ void Process_updateComm(Process* this, const char* comm) {
    if (this->procComm && comm && String_eq(this->procComm, comm))
       return;
 
-   free(this->procComm);
-   this->procComm = comm ? xStrdup(comm) : NULL;
+   xFree(this->procComm, __func__, __FILE__, __LINE__);
+   this->procComm = comm ? xStrdup(comm, __func__, __FILE__, __LINE__) : NULL;
    this->mergedCommand.commChanged = true;
 }
 
@@ -1213,8 +1213,8 @@ void Process_updateCmdline(Process* this, const char* cmdline, int basenameStart
    if (this->cmdline && cmdline && String_eq(this->cmdline, cmdline))
       return;
 
-   free(this->cmdline);
-   this->cmdline = cmdline ? xStrdup(cmdline) : NULL;
+   xFree(this->cmdline, __func__, __FILE__, __LINE__);
+   this->cmdline = cmdline ? xStrdup(cmdline, __func__, __FILE__, __LINE__) : NULL;
    this->cmdlineBasenameStart = (basenameStart || !cmdline) ? basenameStart : skipPotentialPath(cmdline, basenameEnd);
    this->cmdlineBasenameEnd = basenameEnd;
    this->mergedCommand.cmdlineChanged = true;
@@ -1227,9 +1227,9 @@ void Process_updateExe(Process* this, const char* exe) {
    if (this->procExe && exe && String_eq(this->procExe, exe))
       return;
 
-   free(this->procExe);
+   xFree(this->procExe, __func__, __FILE__, __LINE__);
    if (exe) {
-      this->procExe = xStrdup(exe);
+      this->procExe = xStrdup(exe, __func__, __FILE__, __LINE__);
       const char* lastSlash = strrchr(exe, '/');
       this->procExeBasenameOffset = (lastSlash && *(lastSlash + 1) != '\0' && lastSlash != exe) ? (lastSlash - exe + 1) : 0;
    } else {

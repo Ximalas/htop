@@ -22,9 +22,9 @@ Vector* Vector_new(const ObjectClass* type, bool owner, int size) {
    }
 
    assert(size > 0);
-   this = xMalloc(sizeof(Vector));
+   this = xMalloc(sizeof(Vector), __func__, __FILE__, __LINE__);
    this->growthRate = size;
-   this->array = (Object**) xCalloc(size, sizeof(Object*));
+   this->array = (Object**) xCalloc(size, sizeof(Object*), __func__, __FILE__, __LINE__);
    this->arraySize = size;
    this->items = 0;
    this->type = type;
@@ -40,8 +40,8 @@ void Vector_delete(Vector* this) {
          }
       }
    }
-   free(this->array);
-   free(this);
+   xFree(this->array, __func__, __FILE__, __LINE__);
+   xFree(this, __func__, __FILE__, __LINE__);
 }
 
 #ifndef NDEBUG
@@ -191,7 +191,7 @@ static void Vector_checkArraySize(Vector* this) {
       //int i;
       //i = this->arraySize;
       this->arraySize = this->items + this->growthRate;
-      this->array = (Object**) xRealloc(this->array, sizeof(Object*) * this->arraySize);
+      this->array = (Object**) xRealloc(this->array, sizeof(Object*) * this->arraySize, __func__, __FILE__, __LINE__);
       //for (; i < this->arraySize; i++)
       //   this->array[i] = NULL;
    }

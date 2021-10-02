@@ -25,7 +25,7 @@ in the source distribution for its full text.
 
 ScreenManager* ScreenManager_new(Header* header, const Settings* settings, const State* state, bool owner) {
    ScreenManager* this;
-   this = xMalloc(sizeof(ScreenManager));
+   this = xMalloc(sizeof(ScreenManager), __func__, __FILE__, __LINE__);
    this->x1 = 0;
    this->y1 = 0;
    this->x2 = 0;
@@ -41,7 +41,7 @@ ScreenManager* ScreenManager_new(Header* header, const Settings* settings, const
 
 void ScreenManager_delete(ScreenManager* this) {
    Vector_delete(this->panels);
-   free(this);
+   xFree(this, __func__, __FILE__, __LINE__);
 }
 
 inline int ScreenManager_size(const ScreenManager* this) {

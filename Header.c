@@ -26,8 +26,8 @@ in the source distribution for its full text.
 
 
 Header* Header_new(ProcessList* pl, Settings* settings, HeaderLayout hLayout) {
-   Header* this = xCalloc(1, sizeof(Header));
-   this->columns = xMallocArray(HeaderLayout_getColumns(hLayout), sizeof(Vector*));
+   Header* this = xCalloc(1, sizeof(Header), __func__, __FILE__, __LINE__);
+   this->columns = xMallocArray(HeaderLayout_getColumns(hLayout), sizeof(Vector*), __func__, __FILE__, __LINE__);
    this->settings = settings;
    this->pl = pl;
    this->headerLayout = hLayout;
@@ -44,8 +44,8 @@ void Header_delete(Header* this) {
       Vector_delete(this->columns[i]);
    }
 
-   free(this->columns);
-   free(this);
+   xFree(this->columns, __func__, __FILE__, __LINE__);
+   xFree(this, __func__, __FILE__, __LINE__);
 }
 
 void Header_setLayout(Header* this, HeaderLayout hLayout) {
@@ -58,7 +58,7 @@ void Header_setLayout(Header* this, HeaderLayout hLayout) {
       return;
 
    if (newColumns > oldColumns) {
-      this->columns = xReallocArray(this->columns, newColumns, sizeof(Vector*));
+      this->columns = xReallocArray(this->columns, newColumns, sizeof(Vector*), __func__, __FILE__, __LINE__);
       for (size_t i = oldColumns; i < newColumns; i++)
          this->columns[i] = Vector_new(Class(Meter), true, DEFAULT_SIZE);
    } else {
@@ -69,7 +69,7 @@ void Header_setLayout(Header* this, HeaderLayout hLayout) {
          }
          Vector_delete(this->columns[i]);
       }
-      this->columns = xReallocArray(this->columns, newColumns, sizeof(Vector*));
+      this->columns = xReallocArray(this->columns, newColumns, sizeof(Vector*), __func__, __FILE__, __LINE__);
    }
 
    Header_calculateHeight(this);
@@ -137,16 +137,16 @@ void Header_writeBackToSettings(const Header* this) {
 
       if (colSettings->names) {
          for (size_t j = 0; j < colSettings->len; j++)
-            free(colSettings->names[j]);
-         free(colSettings->names);
+            xFree(colSettings->names[j], __func__, __FILE__, __LINE__);
+         xFree(colSettings->names, __func__, __FILE__, __LINE__);
       }
-      free(colSettings->modes);
+      xFree(colSettings->modes, __func__, __FILE__, __LINE__);
 
       const Vector* vec = this->columns[col];
       int len = Vector_size(vec);
 
-      colSettings->names = len ? xCalloc(len, sizeof(char*)) : NULL;
-      colSettings->modes = len ? xCalloc(len, sizeof(int)) : NULL;
+      colSettings->names = len ? xCalloc(len, sizeof(char*), __func__, __FILE__, __LINE__) : NULL;
+      colSettings->modes = len ? xCalloc(len, sizeof(int), __func__, __FILE__, __LINE__) : NULL;
       colSettings->len = len;
 
       for (int i = 0; i < len; i++) {

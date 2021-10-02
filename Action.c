@@ -172,15 +172,15 @@ static Htop_Reaction actionSetSortColumn(State* st) {
          DynamicColumn* column = Hashtable_get(dynamicColumns, fields[i]);
          if (!column)
             continue;
-         name = xStrdup(column->caption ? column->caption : column->name);
+         name = xStrdup(column->caption ? column->caption : column->name, __func__, __FILE__, __LINE__);
       } else {
-         name = String_trim(Process_fields[fields[i]].name);
+         name = String_trim(Process_fields[fields[i]].name, __func__, __FILE__, __LINE__);
       }
       Panel_add(sortPanel, (Object*) ListItem_new(name, fields[i]));
       if (fields[i] == Settings_getActiveSortKey(st->settings))
          Panel_setSelected(sortPanel, i);
 
-      free(name);
+      xFree(name, __func__, __FILE__, __LINE__);
    }
    const ListItem* field = (const ListItem*) Action_pickFromVector(st, sortPanel, 14, false);
    if (field) {

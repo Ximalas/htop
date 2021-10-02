@@ -35,7 +35,7 @@ static const int TraceScreenEvents[] = {KEY_F(3), KEY_F(4), KEY_F(8), KEY_F(9), 
 
 TraceScreen* TraceScreen_new(const Process* process) {
    // This initializes all TraceScreen variables to "false" so only default = true ones need to be set below
-   TraceScreen* this = xCalloc(1, sizeof(TraceScreen));
+   TraceScreen* this = xCalloc(1, sizeof(TraceScreen), __func__, __FILE__, __LINE__);
    Object_setClass(this, Class(TraceScreen));
    this->tracing = true;
    FunctionBar* fuBar = FunctionBar_new(TraceScreenFunctions, TraceScreenKeys, TraceScreenEvents);
@@ -55,7 +55,7 @@ void TraceScreen_delete(Object* cast) {
    }
 
    CRT_enableDelay();
-   free(InfoScreen_done((InfoScreen*)this));
+   xFree(InfoScreen_done((InfoScreen*)this), __func__, __FILE__, __LINE__);
 }
 
 static void TraceScreen_draw(InfoScreen* this) {

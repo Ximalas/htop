@@ -20,16 +20,16 @@ in the source distribution for its full text.
 static void RichString_extendLen(RichString* this, int len) {
    if (this->chlen <= RICHSTRING_MAXLEN) {
       if (len > RICHSTRING_MAXLEN) {
-         this->chptr = xMalloc(charBytes(len + 1));
+         this->chptr = xMalloc(charBytes(len + 1), __func__, __FILE__, __LINE__);
          memcpy(this->chptr, this->chstr, charBytes(this->chlen));
       }
    } else {
       if (len <= RICHSTRING_MAXLEN) {
          memcpy(this->chstr, this->chptr, charBytes(len));
-         free(this->chptr);
+         xFree(this->chptr, __func__, __FILE__, __LINE__);
          this->chptr = this->chstr;
       } else {
-         this->chptr = xRealloc(this->chptr, charBytes(len + 1));
+         this->chptr = xRealloc(this->chptr, charBytes(len + 1), __func__, __FILE__, __LINE__);
       }
    }
 
@@ -187,7 +187,7 @@ int RichString_findChar(const RichString* this, char c, int start) {
 
 void RichString_delete(RichString* this) {
    if (this->chlen > RICHSTRING_MAXLEN) {
-      free(this->chptr);
+      xFree(this->chptr, __func__, __FILE__, __LINE__);
       this->chptr = this->chstr;
    }
 }

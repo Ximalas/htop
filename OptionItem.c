@@ -21,8 +21,8 @@ static void OptionItem_delete(Object* cast) {
    OptionItem* this = (OptionItem*)cast;
    assert (this != NULL);
 
-   free(this->text);
-   free(this);
+   xFree(this->text, __func__, __FILE__, __LINE__);
+   xFree(this, __func__, __FILE__, __LINE__);
 }
 
 static void CheckItem_display(const Object* cast, RichString* out) {
@@ -88,7 +88,7 @@ const OptionItemClass NumberItem_class = {
 
 CheckItem* CheckItem_newByRef(const char* text, bool* ref) {
    CheckItem* this = AllocThis(CheckItem);
-   this->super.text = xStrdup(text);
+   this->super.text = xStrdup(text, __func__, __FILE__, __LINE__);
    this->value = false;
    this->ref = ref;
    return this;
@@ -96,7 +96,7 @@ CheckItem* CheckItem_newByRef(const char* text, bool* ref) {
 
 CheckItem* CheckItem_newByVal(const char* text, bool value) {
    CheckItem* this = AllocThis(CheckItem);
-   this->super.text = xStrdup(text);
+   this->super.text = xStrdup(text, __func__, __FILE__, __LINE__);
    this->value = value;
    this->ref = NULL;
    return this;
@@ -130,7 +130,7 @@ NumberItem* NumberItem_newByRef(const char* text, int* ref, int scale, int min, 
    assert(min <= max);
 
    NumberItem* this = AllocThis(NumberItem);
-   this->super.text = xStrdup(text);
+   this->super.text = xStrdup(text, __func__, __FILE__, __LINE__);
    this->value = 0;
    this->ref = ref;
    this->scale = scale;
@@ -143,7 +143,7 @@ NumberItem* NumberItem_newByVal(const char* text, int value, int scale, int min,
    assert(min <= max);
 
    NumberItem* this = AllocThis(NumberItem);
-   this->super.text = xStrdup(text);
+   this->super.text = xStrdup(text, __func__, __FILE__, __LINE__);
    this->value = CLAMP(value, min, max);
    this->ref = NULL;
    this->scale = scale;

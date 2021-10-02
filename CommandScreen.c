@@ -64,5 +64,5 @@ CommandScreen* CommandScreen_new(Process* process) {
 }
 
 void CommandScreen_delete(Object* this) {
-   free(InfoScreen_done((InfoScreen*)this));
+   xFree(InfoScreen_done((InfoScreen*)this), __func__, __FILE__, __LINE__);
 }

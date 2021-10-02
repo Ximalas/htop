@@ -59,7 +59,7 @@ static int kernelFScale;
 ProcessList* ProcessList_new(UsersTable* usersTable, Hashtable* dynamicMeters, Hashtable* DynamicColumns, Hashtable* pidMatchList, uid_t userId) {
    size_t len;
    char errbuf[_POSIX2_LINE_MAX];
-   FreeBSDProcessList* fpl = xCalloc(1, sizeof(FreeBSDProcessList));
+   FreeBSDProcessList* fpl = xCalloc(1, sizeof(FreeBSDProcessList), __func__, __FILE__, __LINE__);
    ProcessList* pl = (ProcessList*) fpl;
    ProcessList_init(pl, Class(FreeBSDProcess), usersTable, dynamicMeters, DynamicColumns, pidMatchList, userId);
 
@@ -109,8 +109,8 @@ ProcessList* ProcessList_new(UsersTable* usersTable, Hashtable* dynamicMeters, H
 
    size_t sizeof_cp_time_array = sizeof(unsigned long) * CPUSTATES;
    len = 2; sysctlnametomib("kern.cp_time", MIB_kern_cp_time, &len);
-   fpl->cp_time_o = xCalloc(cpus, sizeof_cp_time_array);
-   fpl->cp_time_n = xCalloc(cpus, sizeof_cp_time_array);
+   fpl->cp_time_o = xCalloc(cpus, sizeof_cp_time_array, __func__, __FILE__, __LINE__);
+   fpl->cp_time_n = xCalloc(cpus, sizeof_cp_time_array, __func__, __FILE__, __LINE__);
    len = sizeof_cp_time_array;
 
    // fetch initial single (or average) CPU clicks from kernel
@@ -119,8 +119,8 @@ ProcessList* ProcessList_new(UsersTable* usersTable, Hashtable* dynamicMeters, H
    // on smp box, fetch rest of initial CPU's clicks
    if (cpus > 1) {
       len = 2; sysctlnametomib("kern.cp_times", MIB_kern_cp_times, &len);
-      fpl->cp_times_o = xCalloc(cpus, sizeof_cp_time_array);
-      fpl->cp_times_n = xCalloc(cpus, sizeof_cp_time_array);
+      fpl->cp_times_o = xCalloc(cpus, sizeof_cp_time_array, __func__, __FILE__, __LINE__);
+      fpl->cp_times_n = xCalloc(cpus, sizeof_cp_time_array, __func__, __FILE__, __LINE__);
       len = cpus * sizeof_cp_time_array;
       sysctl(MIB_kern_cp_times, 2, fpl->cp_times_o, &len, NULL, 0);
    }
@@ -130,10 +130,10 @@ ProcessList* ProcessList_new(UsersTable* usersTable, Hashtable* dynamicMeters, H
    pl->activeCPUs = pl->existingCPUs;
 
    if (cpus == 1 ) {
-      fpl->cpus = xRealloc(fpl->cpus, sizeof(CPUData));
+      fpl->cpus = xRealloc(fpl->cpus, sizeof(CPUData), __func__, __FILE__, __LINE__);
    } else {
       // on smp we need CPUs + 1 to store averages too (as kernel kindly provides that as well)
-      fpl->cpus = xRealloc(fpl->cpus, (pl->existingCPUs + 1) * sizeof(CPUData));
+      fpl->cpus = xRealloc(fpl->cpus, (pl->existingCPUs + 1) * sizeof(CPUData), __func__, __FILE__, __LINE__);
    }
 
 
@@ -158,14 +158,14 @@ void ProcessList_delete(ProcessList* this) {
       kvm_close(fpl->kd);
    }
 
-   free(fpl->cp_time_o);
-   free(fpl->cp_time_n);
-   free(fpl->cp_times_o);
-   free(fpl->cp_times_n);
-   free(fpl->cpus);
+   xFree(fpl->cp_time_o, __func__, __FILE__, __LINE__);
+   xFree(fpl->cp_time_n, __func__, __FILE__, __LINE__);
+   xFree(fpl->cp_times_o, __func__, __FILE__, __LINE__);
+   xFree(fpl->cp_times_n, __func__, __FILE__, __LINE__);
+   xFree(fpl->cpus, __func__, __FILE__, __LINE__);
 
    ProcessList_done(this);
-   free(this);
+   xFree(this, __func__, __FILE__, __LINE__);
 }
 
 static inline void FreeBSDProcessList_scanCPU(ProcessList* pl) {
@@ -401,19 +401,19 @@ static void FreeBSDProcessList_updateCwd(const struct kinfo_proc* kproc, Process
    char buffer[2048];
    size_t size = sizeof(buffer);
    if (sysctl(mib, 4, buffer, &size, NULL, 0) != 0) {
-      free(proc->procCwd);
+      xFree(proc->procCwd, __func__, __FILE__, __LINE__);
       proc->procCwd = NULL;
       return;
    }
 
    /* Kernel threads return an empty buffer */
    if (buffer[0] == '\0') {
-      free(proc->procCwd);
+      xFree(proc->procCwd, __func__, __FILE__, __LINE__);
       proc->procCwd = NULL;
       return;
    }
 
-   free_and_xStrdup(&proc->procCwd, buffer);
+   free_and_xStrdup(&proc->procCwd, buffer, __func__, __FILE__, __LINE__);
 }
 
 static void FreeBSDProcessList_updateProcessName(kvm_t* kd, const struct kinfo_proc* kproc, Process* proc) {
@@ -430,7 +430,7 @@ static void FreeBSDProcessList_updateProcessName(kvm_t* kd, const struct kinfo_p
       len += strlen(argv[i]) + 1;
    }
 
-   char* cmdline = xMalloc(len);
+   char* cmdline = xMalloc(len, __func__, __FILE__, __LINE__);
    char* at = cmdline;
    int end = 0;
    for (int i = 0; argv[i]; i++) {
@@ -450,7 +450,7 @@ static void FreeBSDProcessList_updateProcessName(kvm_t* kd, const struct kinfo_p
 
 static char* FreeBSDProcessList_readJailName(const struct kinfo_proc* kproc) {
    if (kproc->ki_jid == 0)
-      return xStrdup("-");
+      return xStrdup("-", __func__, __FILE__, __LINE__);
 
    char jnamebuf[MAXHOSTNAMELEN] = {0};
    struct iovec jiov[4];
@@ -468,7 +468,7 @@ IGNORE_WCASTQUAL_END
 
    int jid = jail_get(jiov, 4, 0);
    if (jid == kproc->ki_jid)
-      return xStrdup(jnamebuf);
+      return xStrdup(jnamebuf, __func__, __FILE__, __LINE__);
 
    return NULL;
 }
@@ -525,16 +525,16 @@ void ProcessList_goThroughEntries(ProcessList* super, bool pauseProcessUpdate) {
          proc->tty_nr = kproc->ki_tdev;
          const char* name = (kproc->ki_tdev != NODEV) ? devname(kproc->ki_tdev, S_IFCHR) : NULL;
          if (!name) {
-            free(proc->tty_name);
+            xFree(proc->tty_name, __func__, __FILE__, __LINE__);
             proc->tty_name = NULL;
          } else {
-            free_and_xStrdup(&proc->tty_name, name);
+            free_and_xStrdup(&proc->tty_name, name, __func__, __FILE__, __LINE__);
          }
       } else {
          if (fp->jid != kproc->ki_jid) {
             // process can enter jail anytime
             fp->jid = kproc->ki_jid;
-            free(fp->jname);
+            xFree(fp->jname, __func__, __FILE__, __LINE__);
             fp->jname = FreeBSDProcessList_readJailName(kproc);
          }
          // if there are reapers in the system, process can get reparented anytime

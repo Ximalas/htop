@@ -45,7 +45,7 @@ static int kernelFScale;
 ProcessList* ProcessList_new(UsersTable* usersTable, Hashtable* dynamicMeters, Hashtable* dynamicColumns, Hashtable* pidMatchList, uid_t userId) {
    size_t len;
    char errbuf[_POSIX2_LINE_MAX];
-   DragonFlyBSDProcessList* dfpl = xCalloc(1, sizeof(DragonFlyBSDProcessList));
+   DragonFlyBSDProcessList* dfpl = xCalloc(1, sizeof(DragonFlyBSDProcessList), __func__, __FILE__, __LINE__);
    ProcessList* pl = (ProcessList*) dfpl;
    ProcessList_init(pl, Class(DragonFlyBSDProcess), usersTable, dynamicMeters, dynamicColumns, pidMatchList, userId);
 
@@ -79,8 +79,8 @@ ProcessList* ProcessList_new(UsersTable* usersTable, Hashtable* dynamicMeters, H
 
    size_t sizeof_cp_time_array = sizeof(unsigned long) * CPUSTATES;
    len = 2; sysctlnametomib("kern.cp_time", MIB_kern_cp_time, &len);
-   dfpl->cp_time_o = xCalloc(cpus, sizeof_cp_time_array);
-   dfpl->cp_time_n = xCalloc(cpus, sizeof_cp_time_array);
+   dfpl->cp_time_o = xCalloc(cpus, sizeof_cp_time_array, __func__, __FILE__, __LINE__);
+   dfpl->cp_time_n = xCalloc(cpus, sizeof_cp_time_array, __func__, __FILE__, __LINE__);
    len = sizeof_cp_time_array;
 
    // fetch initial single (or average) CPU clicks from kernel
@@ -89,8 +89,8 @@ ProcessList* ProcessList_new(UsersTable* usersTable, Hashtable* dynamicMeters, H
    // on smp box, fetch rest of initial CPU's clicks
    if (cpus > 1) {
       len = 2; sysctlnametomib("kern.cp_times", MIB_kern_cp_times, &len);
-      dfpl->cp_times_o = xCalloc(cpus, sizeof_cp_time_array);
-      dfpl->cp_times_n = xCalloc(cpus, sizeof_cp_time_array);
+      dfpl->cp_times_o = xCalloc(cpus, sizeof_cp_time_array, __func__, __FILE__, __LINE__);
+      dfpl->cp_times_n = xCalloc(cpus, sizeof_cp_time_array, __func__, __FILE__, __LINE__);
       len = cpus * sizeof_cp_time_array;
       sysctl(MIB_kern_cp_times, 2, dfpl->cp_times_o, &len, NULL, 0);
    }
@@ -100,10 +100,10 @@ ProcessList* ProcessList_new(UsersTable* usersTable, Hashtable* dynamicMeters, H
    pl->activeCPUs = pl->existingCPUs;
 
    if (cpus == 1 ) {
-      dfpl->cpus = xRealloc(dfpl->cpus, sizeof(CPUData));
+      dfpl->cpus = xRealloc(dfpl->cpus, sizeof(CPUData), __func__, __FILE__, __LINE__);
    } else {
       // on smp we need CPUs + 1 to store averages too (as kernel kindly provides that as well)
-      dfpl->cpus = xRealloc(dfpl->cpus, (pl->existingCPUs + 1) * sizeof(CPUData));
+      dfpl->cpus = xRealloc(dfpl->cpus, (pl->existingCPUs + 1) * sizeof(CPUData), __func__, __FILE__, __LINE__);
    }
 
    len = sizeof(kernelFScale);
@@ -129,14 +129,14 @@ void ProcessList_delete(ProcessList* this) {
    if (dfpl->jails) {
       Hashtable_delete(dfpl->jails);
    }
-   free(dfpl->cp_time_o);
-   free(dfpl->cp_time_n);
-   free(dfpl->cp_times_o);
-   free(dfpl->cp_times_n);
-   free(dfpl->cpus);
+   xFree(dfpl->cp_time_o, __func__, __FILE__, __LINE__);
+   xFree(dfpl->cp_time_n, __func__, __FILE__, __LINE__);
+   xFree(dfpl->cp_times_o, __func__, __FILE__, __LINE__);
+   xFree(dfpl->cp_times_n, __func__, __FILE__, __LINE__);
+   xFree(dfpl->cpus, __func__, __FILE__, __LINE__);
 
    ProcessList_done(this);
-   free(this);
+   xFree(this, __func__, __FILE__, __LINE__);
 }
 
 static inline void DragonFlyBSDProcessList_scanCPUTime(ProcessList* pl) {
@@ -303,14 +303,14 @@ static void DragonFlyBSDProcessList_updateCwd(const struct kinfo_proc* kproc, Pr
    char buffer[2048];
    size_t size = sizeof(buffer);
    if (sysctl(mib, 4, buffer, &size, NULL, 0) != 0) {
-      free(proc->procCwd);
+      xFree(proc->procCwd, __func__, __FILE__, __LINE__);
       proc->procCwd = NULL;
       return;
    }
 
    /* Kernel threads return an empty buffer */
    if (buffer[0] == '\0') {
-      free(proc->procCwd);
+      xFree(proc->procCwd, __func__, __FILE__, __LINE__);
       proc->procCwd = NULL;
       return;
    }
@@ -332,8 +332,7 @@ static void DragonFlyBSDProcessList_updateProcessName(kvm_t* kd, const struct ki
       len += strlen(argv[i]) + 1;
    }
 
-   char* cmdline = xMalloc(len);
-
+   char* cmdline = xMalloc(len, __func__, __FILE__, __LINE__);
    char* at = cmdline;
    int end = 0;
    for (int i = 0; argv[i]; i++) {
@@ -365,11 +364,11 @@ retry:
    if (len == 0)
       return;
 
-   jls = xMalloc(len);
+   jls = xMalloc(len, __func__, __FILE__, __LINE__);
 
    if (sysctlbyname("jail.list", jls, &len, NULL, 0) == -1) {
       if (errno == ENOMEM) {
-         free(jls);
+         xFree(jls, __func__, __FILE__, __LINE__);
          goto retry;
       }
       CRT_fatalError("sysctlbyname / jail.list failed");
@@ -402,7 +401,7 @@ retry:
       curpos = nextpos;
    }
 
-   free(jls);
+   xFree(jls, __func__, __FILE__, __LINE__);
 }
 
 static char* DragonFlyBSDProcessList_readJailName(DragonFlyBSDProcessList* dfpl, int jailid) {
@@ -472,7 +471,7 @@ void ProcessList_goThroughEntries(ProcessList* super, bool pauseProcessUpdate) {
          proc->tty_nr = kproc->kp_tdev; // control terminal device number
          const char* name = (kproc->kp_tdev != NODEV) ? devname(kproc->kp_tdev, S_IFCHR) : NULL;
          if (!name) {
-            free(proc->tty_name);
+            xFree(proc->tty_name, __func__, __FILE__, __LINE__);
             proc->tty_name = NULL;
          } else {
             free_and_xStrdup(&proc->tty_name, name);
@@ -492,7 +491,7 @@ void ProcessList_goThroughEntries(ProcessList* super, bool pauseProcessUpdate) {
          proc->processor = kproc->kp_lwp.kl_cpuid;
          if (dfp->jid != kproc->kp_jailid) {	// process can enter jail anytime
             dfp->jid = kproc->kp_jailid;
-            free(dfp->jname);
+            xFree(dfp->jname, __func__, __FILE__, __LINE__);
             dfp->jname = DragonFlyBSDProcessList_readJailName(dfpl, kproc->kp_jailid);
          }
          // if there are reapers in the system, process can get reparented anytime

@@ -111,10 +111,10 @@ static size_t nextPrime(size_t n) {
 Hashtable* Hashtable_new(size_t size, bool owner) {
    Hashtable* this;
 
-   this = xMalloc(sizeof(Hashtable));
+   this = xMalloc(sizeof(Hashtable), __func__, __FILE__, __LINE__);
    this->items = 0;
    this->size = size ? nextPrime(size) : 13;
-   this->buckets = (HashtableItem*) xCalloc(this->size, sizeof(HashtableItem));
+   this->buckets = (HashtableItem*) xCalloc(this->size, sizeof(HashtableItem), __func__, __FILE__, __LINE__);
    this->owner = owner;
 
    assert(Hashtable_isConsistent(this));
@@ -124,8 +124,8 @@ Hashtable* Hashtable_new(size_t size, bool owner) {
 void Hashtable_delete(Hashtable* this) {
    Hashtable_clear(this);
 
-   free(this->buckets);
-   free(this);
+   xFree(this->buckets, __func__, __FILE__, __LINE__);
+   xFree(this, __func__, __FILE__, __LINE__);
 }
 
 void Hashtable_clear(Hashtable* this) {
@@ -133,7 +133,7 @@ void Hashtable_clear(Hashtable* this) {
 
    if (this->owner)
       for (size_t i = 0; i < this->size; i++)
-         free(this->buckets[i].value);
+         xFree(this->buckets[i].value, __func__, __FILE__, __LINE__);
 
    memset(this->buckets, 0, this->size * sizeof(HashtableItem));
    this->items = 0;
@@ -159,7 +159,7 @@ static void insert(Hashtable* this, ht_key_t key, void* value) {
 
       if (this->buckets[index].key == key) {
          if (this->owner && this->buckets[index].value != value)
-            free(this->buckets[index].value);
+            xFree(this->buckets[index].value, __func__, __FILE__, __LINE__);
          this->buckets[index].value = value;
          return;
       }
@@ -195,7 +195,7 @@ void Hashtable_setSize(Hashtable* this, size_t size) {
    size_t oldSize = this->size;
 
    this->size = nextPrime(size);
-   this->buckets = (HashtableItem*) xCalloc(this->size, sizeof(HashtableItem));
+   this->buckets = (HashtableItem*) xCalloc(this->size, sizeof(HashtableItem), __func__, __FILE__, __LINE__);
    this->items = 0;
 
    /* rehash */
@@ -206,7 +206,7 @@ void Hashtable_setSize(Hashtable* this, size_t size) {
       insert(this, oldBuckets[i].key, oldBuckets[i].value);
    }
 
-   free(oldBuckets);
+   xFree(oldBuckets, __func__, __FILE__, __LINE__);
 
    assert(Hashtable_isConsistent(this));
 }
@@ -246,7 +246,7 @@ void* Hashtable_remove(Hashtable* this, ht_key_t key) {
    while (this->buckets[index].value) {
       if (this->buckets[index].key == key) {
          if (this->owner) {
-            free(this->buckets[index].value);
+            xFree(this->buckets[index].value, __func__, __FILE__, __LINE__);
          } else {
             res = this->buckets[index].value;
          }

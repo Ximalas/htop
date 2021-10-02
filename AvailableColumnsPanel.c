@@ -29,7 +29,7 @@ static void AvailableColumnsPanel_delete(Object* object) {
    Panel* super = (Panel*) object;
    AvailableColumnsPanel* this = (AvailableColumnsPanel*) object;
    Panel_done(super);
-   free(this);
+   xFree(this, __func__, __FILE__, __LINE__);
 }
 
 static void AvailableColumnsPanel_insert(AvailableColumnsPanel* this, int at, int key) {

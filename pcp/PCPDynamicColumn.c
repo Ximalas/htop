@@ -36,7 +36,7 @@ static bool PCPDynamicColumn_addMetric(PCPDynamicColumns* columns, PCPDynamicCol
       return false;
 
    size_t bytes = 16 + strlen(column->super.name);
-   char* metricName = xMalloc(bytes);
+   char* metricName = xMalloc(bytes, __func__, __FILE__, __LINE__);
    xSnprintf(metricName, bytes, "htop.column.%s", column->super.name);
 
    column->metricName = metricName;
@@ -59,10 +59,10 @@ static void PCPDynamicColumn_parseMetric(PCPDynamicColumns* columns, PCPDynamicC
       xAsprintf(&note,
                 "%s: failed to parse expression in %s at line %u\n%s\n",
                 pmGetProgname(), path, line, error);
-      free(error);
+      xFree(error, __func__, __FILE__, __LINE__);
       errno = EINVAL;
       CRT_fatalError(note);
-      free(note);
+      xFree(note, __func__, __FILE__, __LINE__);
    }
 }
 
@@ -105,7 +105,7 @@ static bool PCPDynamicColumn_uniqueName(char* key, PCPDynamicColumns* columns) {
 }
 
 static PCPDynamicColumn* PCPDynamicColumn_new(PCPDynamicColumns* columns, const char* name) {
-   PCPDynamicColumn* column = xCalloc(1, sizeof(*column));
+   PCPDynamicColumn* column = xCalloc(1, sizeof(*column), __func__, __FILE__, __LINE__);
    String_safeStrncpy(column->super.name, name, sizeof(column->super.name));
 
    size_t id = columns->count + LAST_PROCESSFIELD;
@@ -131,15 +131,15 @@ static void PCPDynamicColumn_parseFile(PCPDynamicColumns* columns, const char* p
 
       /* cleanup whitespace, skip comment lines */
       char* trimmed = String_trim(line);
-      free(line);
+      xFree(line, __func__, __FILE__, __LINE__);
       if (!trimmed || !trimmed[0] || trimmed[0] == '#') {
-         free(trimmed);
+         xFree(trimmed, __func__, __FILE__, __LINE__);
          continue;
       }
 
       size_t n;
       char** config = String_split(trimmed, '=', &n);
-      free(trimmed);
+      xFree(trimmed, __func__, __FILE__, __LINE__);
       if (config == NULL)
          continue;
 
@@ -163,8 +163,8 @@ static void PCPDynamicColumn_parseFile(PCPDynamicColumns* columns, const char* p
          PCPDynamicColumn_parseMetric(columns, column, path, lineno, value);
       }
       String_freeArray(config);
-      free(value);
-      free(key);
+      xFree(value, __func__, __FILE__, __LINE__);
+      xFree(key, __func__, __FILE__, __LINE__);
    }
    fclose(file);
 }
@@ -181,7 +181,7 @@ static void PCPDynamicColumn_scanDir(PCPDynamicColumns* columns, char* path) {
 
       char* file = String_cat(path, dirent->d_name);
       PCPDynamicColumn_parseFile(columns, file);
-      free(file);
+      xFree(file, __func__, __FILE__, __LINE__);
    }
    closedir(dir);
 }
@@ -200,7 +200,7 @@ void PCPDynamicColumns_init(PCPDynamicColumns* columns) {
    if (override) {
       path = String_cat(override, "/columns/");
       PCPDynamicColumn_scanDir(columns, path);
-      free(path);
+      xFree(path, __func__, __FILE__, __LINE__);
    }
 
    /* next, search in home directory alongside htoprc */
@@ -212,26 +212,26 @@ void PCPDynamicColumns_init(PCPDynamicColumns* columns) {
       path = NULL;
    if (path) {
       PCPDynamicColumn_scanDir(columns, path);
-      free(path);
+      xFree(path, __func__, __FILE__, __LINE__);
    }
 
    /* next, search in the system columns directory */
    path = String_cat(sysconf, "/htop/columns/");
    PCPDynamicColumn_scanDir(columns, path);
-   free(path);
+   xFree(path, __func__, __FILE__, __LINE__);
 
    /* next, try the readonly system columns directory */
    path = String_cat(share, "/htop/columns/");
    PCPDynamicColumn_scanDir(columns, path);
-   free(path);
+   xFree(path, __func__, __FILE__, __LINE__);
 }
 
 static void PCPDynamicColumns_free(ATTR_UNUSED ht_key_t key, void* value, ATTR_UNUSED void* data) {
    PCPDynamicColumn* column = (PCPDynamicColumn*) value;
-   free(column->metricName);
-   free(column->super.heading);
-   free(column->super.caption);
-   free(column->super.description);
+   xFree(column->metricName, __func__, __FILE__, __LINE__);
+   xFree(column->super.heading, __func__, __FILE__, __LINE__);
+   xFree(column->super.caption, __func__, __FILE__, __LINE__);
+   xFree(column->super.description, __func__, __FILE__, __LINE__);
 }
 
 void PCPDynamicColumns_done(Hashtable* table) {
@@ -263,7 +263,7 @@ void PCPDynamicColumn_writeField(PCPDynamicColumn* this, const Process* proc, Ri
       case PM_TYPE_STRING:
          attr = CRT_colors[PROCESS_SHADOW];
          Process_printLeftAlignedField(str, attr, atom.cp, abswidth);
-         free(atom.cp);
+         xFree(atom.cp, __func__, __FILE__, __LINE__);
          break;
       case PM_TYPE_32:
          xSnprintf(buffer, sizeof(buffer), "%*d ", width, atom.l);
@@ -309,8 +309,8 @@ int PCPDynamicColumn_compareByKey(const PCPProcess* p1, const PCPProcess* p2, Pr
    if (!PCPMetric_instance(metric, p1->super.pid, p1->offset, &atom1, type) ||
        !PCPMetric_instance(metric, p2->super.pid, p2->offset, &atom2, type)) {
       if (type == PM_TYPE_STRING) {
-         free(atom1.cp);
-         free(atom2.cp);
+         xFree(atom1.cp, __func__, __FILE__, __LINE__);
+         xFree(atom2.cp, __func__, __FILE__, __LINE__);
       }
       return -1;
    }
@@ -318,8 +318,8 @@ int PCPDynamicColumn_compareByKey(const PCPProcess* p1, const PCPProcess* p2, Pr
    switch (type) {
       case PM_TYPE_STRING: {
          int cmp = SPACESHIP_NULLSTR(atom2.cp, atom1.cp);
-         free(atom2.cp);
-         free(atom1.cp);
+         xFree(atom2.cp, __func__, __FILE__, __LINE__);
+         xFree(atom1.cp, __func__, __FILE__, __LINE__);
          return cmp;
       }
       case PM_TYPE_32:

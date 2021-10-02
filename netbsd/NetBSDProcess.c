@@ -211,7 +211,7 @@ const ProcessFieldData Process_fields[LAST_PROCESSFIELD] = {
 };
 
 Process* NetBSDProcess_new(const Settings* settings) {
-   NetBSDProcess* this = xCalloc(sizeof(NetBSDProcess), 1);
+   NetBSDProcess* this = xCalloc(sizeof(NetBSDProcess), 1, __func__, __FILE__, __LINE__);
    Object_setClass(this, Class(NetBSDProcess));
    Process_init(&this->super, settings);
    return &this->super;
@@ -220,7 +220,7 @@ Process* NetBSDProcess_new(const Settings* settings) {
 void Process_delete(Object* cast) {
    NetBSDProcess* this = (NetBSDProcess*) cast;
    Process_done((Process*)cast);
-   free(this);
+   xFree(this, __func__, __FILE__, __LINE__);
 }
 
 static void NetBSDProcess_writeField(const Process* this, RichString* str, ProcessField field) {

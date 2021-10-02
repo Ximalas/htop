@@ -28,7 +28,7 @@ static void ColumnsPanel_delete(Object* object) {
    Panel* super = (Panel*) object;
    ColumnsPanel* this = (ColumnsPanel*) object;
    Panel_done(super);
-   free(this);
+   xFree(this, __func__, __FILE__, __LINE__);
 }
 
 static HandlerResult ColumnsPanel_eventHandler(Panel* super, int ch) {
@@ -160,7 +160,7 @@ void ColumnsPanel_update(Panel* super) {
    ColumnsPanel* this = (ColumnsPanel*) super;
    int size = Panel_size(super);
    this->settings->changed = true;
-   this->settings->fields = xRealloc(this->settings->fields, sizeof(ProcessField) * (size + 1));
+   this->settings->fields = xRealloc(this->settings->fields, sizeof(ProcessField) * (size + 1), __func__, __FILE__, __LINE__);
    this->settings->flags = 0;
    for (int i = 0; i < size; i++) {
       int key = ((ListItem*) Panel_get(super, i))->key;

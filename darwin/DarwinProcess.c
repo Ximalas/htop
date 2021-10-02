@@ -51,7 +51,7 @@ const ProcessFieldData Process_fields[LAST_PROCESSFIELD] = {
 };
 
 Process* DarwinProcess_new(const Settings* settings) {
-   DarwinProcess* this = xCalloc(1, sizeof(DarwinProcess));
+   DarwinProcess* this = xCalloc(1, sizeof(DarwinProcess), __func__, __FILE__, __LINE__);
    Object_setClass(this, Class(DarwinProcess));
    Process_init(&this->super, settings);
 
@@ -67,7 +67,7 @@ void Process_delete(Object* cast) {
    DarwinProcess* this = (DarwinProcess*) cast;
    Process_done(&this->super);
    // free platform-specific fields here
-   free(this);
+   xFree(this, __func__, __FILE__, __LINE__);
 }
 
 static void DarwinProcess_writeField(const Process* this, RichString* str, ProcessField field) {
@@ -113,13 +113,13 @@ static void DarwinProcess_updateCwd(pid_t pid, Process* proc) {
 
    int r = proc_pidinfo(pid, PROC_PIDVNODEPATHINFO, 0, &vpi, sizeof(vpi));
    if (r <= 0) {
-      free(proc->procCwd);
+      xFree(proc->procCwd, __func__, __FILE__, __LINE__);
       proc->procCwd = NULL;
       return;
    }
 
    if (!vpi.pvi_cdir.vip_path[0]) {
-      free(proc->procCwd);
+      xFree(proc->procCwd, __func__, __FILE__, __LINE__);
       proc->procCwd = NULL;
       return;
    }
@@ -145,7 +145,7 @@ static void DarwinProcess_updateCmdLine(const struct kinfo_proc* k, Process* pro
    }
 
    /* Allocate space for the arguments. */
-   procargs = (char*)malloc(argmax);
+   procargs = (char*)xMalloc(argmax, __func__, __FILE__, __LINE__);
    if ( procargs == NULL ) {
       goto ERROR_A;
    }
@@ -258,12 +258,12 @@ static void DarwinProcess_updateCmdLine(const struct kinfo_proc* k, Process* pro
    Process_updateCmdline(proc, sp, 0, end);
 
    /* Clean up. */
-   free( procargs );
+   xFree(procargs, __func__, __FILE__, __LINE__);
 
    return;
 
 ERROR_B:
-   free( procargs );
+   xFree(procargs, __func__, __FILE__, __LINE__);
 
 ERROR_A:
    Process_updateCmdline(proc, k->kp_proc.p_comm, 0, strlen(k->kp_proc.p_comm));
@@ -310,7 +310,7 @@ void DarwinProcess_setFromKInfoProc(Process* proc, const struct kinfo_proc* ps, 
       proc->tty_nr = ps->kp_eproc.e_tdev;
       const char* name = (ps->kp_eproc.e_tdev != NODEV) ? devname(ps->kp_eproc.e_tdev, S_IFCHR) : NULL;
       if (!name) {
-         free(proc->tty_name);
+         xFree(proc->tty_name, __func__, __FILE__, __LINE__);
          proc->tty_name = NULL;
       } else {
          free_and_xStrdup(&proc->tty_name, name);

@@ -47,7 +47,7 @@ static void MemorySwapMeter_init(Meter* this) {
    MemorySwapMeterData* data = this->meterData;
 
    if (!data) {
-      data = this->meterData = xMalloc(sizeof(MemorySwapMeterData));
+      data = this->meterData = xMalloc(sizeof(MemorySwapMeterData), __func__, __FILE__, __LINE__);
       data->memoryMeter = NULL;
       data->swapMeter = NULL;
    }
@@ -85,7 +85,7 @@ static void MemorySwapMeter_done(Meter* this) {
    Meter_delete((Object*)data->swapMeter);
    Meter_delete((Object*)data->memoryMeter);
 
-   free(data);
+   xFree(data, __func__, __FILE__, __LINE__);
 }
 
 const MeterClass MemorySwapMeter_class = {

@@ -45,7 +45,7 @@ const ProcessFieldData Process_fields[LAST_PROCESSFIELD] = {
 };
 
 Process* UnsupportedProcess_new(const Settings* settings) {
-   Process* this = xCalloc(1, sizeof(UnsupportedProcess));
+   Process* this = xCalloc(1, sizeof(UnsupportedProcess), __func__, __FILE__, __LINE__);
    Object_setClass(this, Class(UnsupportedProcess));
    Process_init(this, settings);
    return this;
@@ -55,7 +55,7 @@ void Process_delete(Object* cast) {
    Process* super = (Process*) cast;
    Process_done(super);
    // free platform-specific fields here
-   free(cast);
+   xFree(cast, __func__, __FILE__, __LINE__);
 }
 
 static void UnsupportedProcess_writeField(const Process* this, RichString* str, ProcessField field) {

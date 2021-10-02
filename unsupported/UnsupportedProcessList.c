@@ -15,7 +15,7 @@ in the source distribution for its full text.
 
 
 ProcessList* ProcessList_new(UsersTable* usersTable, Hashtable* dynamicMeters, Hashtable* dynamicColumns, Hashtable* pidMatchList, uid_t userId) {
-   ProcessList* this = xCalloc(1, sizeof(ProcessList));
+   ProcessList* this = xCalloc(1, sizeof(ProcessList), __func__, __FILE__, __LINE__);
    ProcessList_init(this, Class(Process), usersTable, dynamicMeters, dynamicColumns, pidMatchList, userId);
 
    this->existingCPUs = 1;
@@ -26,7 +26,7 @@ ProcessList* ProcessList_new(UsersTable* usersTable, Hashtable* dynamicMeters, H
 
 void ProcessList_delete(ProcessList* this) {
    ProcessList_done(this);
-   free(this);
+   xFree(this, __func__, __FILE__, __LINE__);
 }
 
 void ProcessList_goThroughEntries(ProcessList* super, bool pauseProcessUpdate) {

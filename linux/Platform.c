@@ -386,19 +386,19 @@ char* Platform_getProcessEnv(pid_t pid) {
    do {
       size += bytes;
       capacity += 4096;
-      env = xRealloc(env, capacity);
+      env = xRealloc(env, capacity, __func__, __FILE__, __LINE__);
    } while ((bytes = fread(env + size, 1, capacity - size, fd)) > 0);
 
    fclose(fd);
 
    if (bytes < 0) {
-      free(env);
+      xFree(env, __func__, __FILE__, __LINE__);
       return NULL;
    }
 
    size += bytes;
 
-   env = xRealloc(env, size + 2);
+   env = xRealloc(env, size + 2, __func__, __FILE__, __LINE__);
 
    env[size] = '\0';
    env[size + 1] = '\0';
@@ -462,7 +462,7 @@ out:
 }
 
 FileLocks_ProcessData* Platform_getProcessLocks(pid_t pid) {
-   FileLocks_ProcessData* pdata = xCalloc(1, sizeof(FileLocks_ProcessData));
+   FileLocks_ProcessData* pdata = xCalloc(1, sizeof(FileLocks_ProcessData), __func__, __FILE__, __LINE__);
 
    FILE* f = fopen(PROCDIR "/locks", "r");
    if (!f) {
@@ -495,7 +495,7 @@ FileLocks_ProcessData* Platform_getProcessLocks(pid_t pid) {
       if (pid != lock_pid)
          continue;
 
-      FileLocks_LockData* ldata = xCalloc(1, sizeof(FileLocks_LockData));
+      FileLocks_LockData* ldata = xCalloc(1, sizeof(FileLocks_LockData), __func__, __FILE__, __LINE__);
       FileLocks_Data* data = &ldata->data;
       data->id = lock_id;
       data->locktype = xStrdup(lock_type);
@@ -655,7 +655,7 @@ static unsigned long int parseBatInfo(const char* fileName, const unsigned short
 
       char* line = NULL;
       for (unsigned short int j = 0; j < lineNum; j++) {
-         free(line);
+         xFree(line, __func__, __FILE__, __LINE__);
          line = String_readLine(file);
          if (!line)
             break;
@@ -668,14 +668,14 @@ static unsigned long int parseBatInfo(const char* fileName, const unsigned short
 
       char* foundNumStr = String_getToken(line, wordNum);
       const unsigned long int foundNum = atoi(foundNumStr);
-      free(foundNumStr);
-      free(line);
+      xFree(foundNumStr, __func__, __FILE__, __LINE__);
+      xFree(line, __func__, __FILE__, __LINE__);
 
       total += foundNum;
    }
 
    for (unsigned int i = 0; i < nBatteries; i++)
-      free(batteries[i]);
+      xFree(batteries[i], __func__, __FILE__, __LINE__);
 
    return total;
 }
@@ -712,13 +712,13 @@ static ACPresence procAcpiCheck(void) {
          continue;
 
       char* isOnline = String_getToken(line, 2);
-      free(line);
+      xFree(line, __func__, __FILE__, __LINE__);
 
       if (String_eq(isOnline, "on-line"))
          isOn = AC_PRESENT;
       else
          isOn = AC_ABSENT;
-      free(isOnline);
+      xFree(isOnline, __func__, __FILE__, __LINE__);
       if (isOn == AC_PRESENT)
          break;
    }

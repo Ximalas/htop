@@ -30,8 +30,8 @@ static void AvailableMetersPanel_delete(Object* object) {
    Panel* super = (Panel*) object;
    AvailableMetersPanel* this = (AvailableMetersPanel*) object;
    Panel_done(super);
-   free(this->meterPanels);
-   free(this);
+   xFree(this->meterPanels, __func__, __FILE__, __LINE__);
+   xFree(this, __func__, __FILE__, __LINE__);
 }
 
 static inline void AvailableMetersPanel_addMeter(Header* header, MetersPanel* panel, const MeterClass* type, unsigned int param, size_t column) {

@@ -33,16 +33,16 @@ const MeterClass Meter_class = {
 };
 
 Meter* Meter_new(const struct ProcessList_* pl, unsigned int param, const MeterClass* type) {
-   Meter* this = xCalloc(1, sizeof(Meter));
+   Meter* this = xCalloc(1, sizeof(Meter), __func__, __FILE__, __LINE__);
    Object_setClass(this, type);
    this->h = 1;
    this->param = param;
    this->pl = pl;
    this->curItems = type->maxItems;
    this->curAttributes = NULL;
-   this->values = type->maxItems ? xCalloc(type->maxItems, sizeof(double)) : NULL;
+   this->values = type->maxItems ? xCalloc(type->maxItems, sizeof(double), __func__, __FILE__, __LINE__) : NULL;
    this->total = type->total;
-   this->caption = xStrdup(type->caption);
+   this->caption = xStrdup(type->caption, __func__, __FILE__, __LINE__);
    if (Meter_initFn(this)) {
       Meter_init(this);
    }
@@ -86,14 +86,14 @@ void Meter_delete(Object* cast) {
    if (Meter_doneFn(this)) {
       Meter_done(this);
    }
-   free(this->drawData);
-   free(this->caption);
-   free(this->values);
-   free(this);
+   xFree(this->drawData, __func__, __FILE__, __LINE__);
+   xFree(this->caption, __func__, __FILE__, __LINE__);
+   xFree(this->values, __func__, __FILE__, __LINE__);
+   xFree(this, __func__, __FILE__, __LINE__);
 }
 
 void Meter_setCaption(Meter* this, const char* caption) {
-   free_and_xStrdup(&this->caption, caption);
+   free_and_xStrdup(&this->caption, caption, __func__, __FILE__, __LINE__);
 }
 
 static inline void Meter_displayBuffer(const Meter* this, RichString* out) {
@@ -121,7 +121,7 @@ void Meter_setMode(Meter* this, int modeIndex) {
       }
    } else {
       assert(modeIndex >= 1);
-      free(this->drawData);
+      xFree(this->drawData, __func__, __FILE__, __LINE__);
       this->drawData = NULL;
 
       const MeterMode* mode = Meter_modes[modeIndex];
@@ -290,7 +290,7 @@ static void GraphMeterMode_draw(Meter* this, int x, int y, int w) {
    const ProcessList* pl = this->pl;
 
    if (!this->drawData) {
-      this->drawData = xCalloc(1, sizeof(GraphData));
+      this->drawData = xCalloc(1, sizeof(GraphData), __func__, __FILE__, __LINE__);
    }
    GraphData* data = this->drawData;
    const int nValues = METER_GRAPHDATA_SIZE;

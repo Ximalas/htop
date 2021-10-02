@@ -26,7 +26,7 @@ static void HeaderOptionsPanel_delete(Object* object) {
    Panel* super = (Panel*) object;
    HeaderOptionsPanel* this = (HeaderOptionsPanel*) object;
    Panel_done(super);
-   free(this);
+   xFree(this, __func__, __FILE__, __LINE__);
 }
 
 static HandlerResult HeaderOptionsPanel_eventHandler(Panel* super, int ch) {
