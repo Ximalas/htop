@@ -102,7 +102,7 @@ const ProcessFieldData Process_fields[LAST_PROCESSFIELD] = {
 };
 
 Process* LinuxProcess_new(const Settings* settings) {
-   LinuxProcess* this = xCalloc(1, sizeof(LinuxProcess));
+   LinuxProcess* this = xCalloc(1, sizeof(LinuxProcess), __func__, __FILE__, __LINE__);
    Object_setClass(this, Class(LinuxProcess));
    Process_init(&this->super, settings);
    return &this->super;
@@ -111,12 +111,12 @@ Process* LinuxProcess_new(const Settings* settings) {
 void Process_delete(Object* cast) {
    LinuxProcess* this = (LinuxProcess*) cast;
    Process_done((Process*)cast);
-   free(this->cgroup);
+   xFree(this->cgroup, __func__, __FILE__, __LINE__);
 #ifdef HAVE_OPENVZ
-   free(this->ctid);
+   xFree(this->ctid, __func__, __FILE__, __LINE__);
 #endif
-   free(this->secattr);
-   free(this);
+   xFree(this->secattr, __func__, __FILE__, __LINE__);
+   xFree(this, __func__, __FILE__, __LINE__);
 }
 
 /*

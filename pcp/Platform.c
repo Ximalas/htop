@@ -375,12 +375,12 @@ void Platform_done(void) {
    pmDestroyContext(pcp->context);
    if (pcp->result)
       pmFreeResult(pcp->result);
-   free(pcp->release);
-   free(pcp->fetch);
-   free(pcp->pmids);
-   free(pcp->names);
-   free(pcp->descs);
-   free(pcp);
+   xFree(pcp->release);
+   xFree(pcp->fetch);
+   xFree(pcp->pmids);
+   xFree(pcp->names);
+   xFree(pcp->descs);
+   xFree(pcp);
 }
 
 void Platform_setBindings(Htop_Action* keys) {
@@ -533,7 +533,7 @@ void Platform_setZramValues(Meter* this) {
          stats.usedZramComp += values[i].ull;
    }
 
-   free(values);
+   xFree(values);
 
    this->total = stats.totalZram;
    this->values[0] = stats.usedZramComp;
@@ -612,10 +612,10 @@ void Platform_getRelease(char** string) {
    if (pcp->release) /* cull trailing space */
       pcp->release[strlen(pcp->release)] = '\0';
 
-   free(distro.cp);
-   free(machine.cp);
-   free(release.cp);
-   free(sysname.cp);
+   xFree(distro.cp);
+   xFree(machine.cp);
+   xFree(release.cp);
+   xFree(sysname.cp);
 }
 
 char* Platform_getProcessEnv(pid_t pid) {

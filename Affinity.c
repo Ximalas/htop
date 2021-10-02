@@ -28,22 +28,22 @@ in the source distribution for its full text.
 
 
 Affinity* Affinity_new(ProcessList* pl) {
-   Affinity* this = xCalloc(1, sizeof(Affinity));
+   Affinity* this = xCalloc(1, sizeof(Affinity), __func__, __FILE__, __LINE__);
    this->size = 8;
-   this->cpus = xCalloc(this->size, sizeof(unsigned int));
+   this->cpus = xCalloc(this->size, sizeof(unsigned int), __func__, __FILE__, __LINE__);
    this->pl = pl;
    return this;
 }
 
 void Affinity_delete(Affinity* this) {
-   free(this->cpus);
-   free(this);
+   xFree(this->cpus, __func__, __FILE__, __LINE__);
+   xFree(this, __func__, __FILE__, __LINE__);
 }
 
 void Affinity_add(Affinity* this, unsigned int id) {
    if (this->used == this->size) {
       this->size *= 2;
-      this->cpus = xRealloc(this->cpus, sizeof(unsigned int) * this->size);
+      this->cpus = xRealloc(this->cpus, sizeof(unsigned int) * this->size, __func__, __FILE__, __LINE__);
    }
    this->cpus[this->used] = id;
    this->used++;

@@ -60,7 +60,7 @@ const ProcessFieldData Process_fields[LAST_PROCESSFIELD] = {
 };
 
 Process* SolarisProcess_new(const Settings* settings) {
-   SolarisProcess* this = xCalloc(1, sizeof(SolarisProcess));
+   SolarisProcess* this = xCalloc(1, sizeof(SolarisProcess), __func__, __FILE__, __LINE__);
    Object_setClass(this, Class(SolarisProcess));
    Process_init(&this->super, settings);
    return &this->super;
@@ -69,8 +69,8 @@ Process* SolarisProcess_new(const Settings* settings) {
 void Process_delete(Object* cast) {
    SolarisProcess* sp = (SolarisProcess*) cast;
    Process_done((Process*)cast);
-   free(sp->zname);
-   free(sp);
+   xFree(sp->zname, __func__, __FILE__, __LINE__);
+   xFree(sp, __func__, __FILE__, __LINE__);
 }
 
 static void SolarisProcess_writeField(const Process* this, RichString* str, ProcessField field) {

@@ -199,7 +199,7 @@ static CommandLineSettings parseArguments(const char* program, int argc, char** 
             break;
          case 'p': {
             assert(optarg); /* please clang analyzer, cause optarg can be NULL in the 'u' case */
-            char* argCopy = xStrdup(optarg);
+            char* argCopy = xStrdup(optarg, __func__, __FILE__, __LINE__);
             char* saveptr;
             const char* pid = strtok_r(argCopy, ",", &saveptr);
 
@@ -213,13 +213,13 @@ static CommandLineSettings parseArguments(const char* program, int argc, char** 
                 Hashtable_put(flags.pidMatchList, num_pid, (void *) 1);
                 pid = strtok_r(NULL, ",", &saveptr);
             }
-            free(argCopy);
+            xFree(argCopy, __func__, __FILE__, __LINE__);
 
             break;
          }
          case 'F': {
             assert(optarg);
-            free_and_xStrdup(&flags.commFilter, optarg);
+            free_and_xStrdup(&flags.commFilter, optarg, __func__, __FILE__, __LINE__);
             break;
          }
          case 'H': {
@@ -270,7 +270,7 @@ static void setCommFilter(State* state, char** commFilter) {
    IncSet_setFilter(inc, *commFilter);
    pl->incFilter = IncSet_filter(inc);
 
-   free(*commFilter);
+   xFree(*commFilter, __func__, __FILE__, __LINE__);
    *commFilter = NULL;
 }
 

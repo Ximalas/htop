@@ -52,7 +52,7 @@ const ProcessFieldData Process_fields[LAST_PROCESSFIELD] = {
 };
 
 Process* FreeBSDProcess_new(const Settings* settings) {
-   FreeBSDProcess* this = xCalloc(1, sizeof(FreeBSDProcess));
+   FreeBSDProcess* this = xCalloc(1, sizeof(FreeBSDProcess), __func__, __FILE__, __LINE__);
    Object_setClass(this, Class(FreeBSDProcess));
    Process_init(&this->super, settings);
    return &this->super;
@@ -61,8 +61,8 @@ Process* FreeBSDProcess_new(const Settings* settings) {
 void Process_delete(Object* cast) {
    FreeBSDProcess* this = (FreeBSDProcess*) cast;
    Process_done((Process*)cast);
-   free(this->jname);
-   free(this);
+   xFree(this->jname, __func__, __FILE__, __LINE__);
+   xFree(this, __func__, __FILE__, __LINE__);
 }
 
 static void FreeBSDProcess_writeField(const Process* this, RichString* str, ProcessField field) {

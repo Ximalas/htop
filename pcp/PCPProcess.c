@@ -98,9 +98,9 @@ Process* PCPProcess_new(const Settings* settings) {
 void Process_delete(Object* cast) {
    PCPProcess* this = (PCPProcess*) cast;
    Process_done((Process*)cast);
-   free(this->cgroup);
-   free(this->secattr);
-   free(this);
+   xFree(this->cgroup);
+   xFree(this->secattr);
+   xFree(this);
 }
 
 static void PCPProcess_printDelay(float delay_percent, char* buffer, int n) {

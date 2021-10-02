@@ -293,7 +293,7 @@ char* Platform_getProcessEnv(pid_t pid) {
    mib[0] = CTL_KERN;
    mib[1] = KERN_ARGMAX;
    if (sysctl(mib, 2, &argmax, &bufsz, 0, 0) == 0) {
-      char* buf = xMalloc(argmax);
+      char* buf = xMalloc(argmax, __func__, __FILE__, __LINE__);
       if (buf) {
          mib[0] = CTL_KERN;
          mib[1] = KERN_PROCARGS2;
@@ -321,13 +321,13 @@ char* Platform_getProcessEnv(pid_t pid) {
                   ++p;
 
                size_t size = endp - p;
-               env = xMalloc(size + 2);
+               env = xMalloc(size + 2, __func__, __FILE__, __LINE__);
                memcpy(env, p, size);
                env[size] = 0;
                env[size + 1] = 0;
             }
          }
-         free(buf);
+         xFree(buf, __func__, __FILE__, __LINE__);
       }
    }
 

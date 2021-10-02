@@ -127,12 +127,18 @@ const MeterClass* const Platform_meterTypes[] = {
    NULL
 };
 
+FILE* debug_log;
+
 void Platform_init(void) {
    /* no platform-specific setup needed */
+   if ((debug_log = fopen("debug.log", "w")) == NULL) {
+      fail();
+   }
 }
 
 void Platform_done(void) {
    /* no platform-specific cleanup needed */
+   fclose(debug_log);
 }
 
 void Platform_setBindings(Htop_Action* keys) {
@@ -251,16 +257,16 @@ char* Platform_getProcessEnv(pid_t pid) {
    const int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_ENV, pid };
 
    size_t capacity = ARG_MAX;
-   char* env = xMalloc(capacity);
+   char* env = xMalloc(capacity, __func__, __FILE__, __LINE__);
 
    int err = sysctl(mib, 4, env, &capacity, NULL, 0);
    if (err || capacity == 0) {
-      free(env);
+      xFree(env, __func__, __FILE__, __LINE__);
       return NULL;
    }
 
    if (env[capacity - 1] || env[capacity - 2]) {
-      env = xRealloc(env, capacity + 2);
+      env = xRealloc(env, capacity + 2, __func__, __FILE__, __LINE__);
       env[capacity] = 0;
       env[capacity + 1] = 0;
    }

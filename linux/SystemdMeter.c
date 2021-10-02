@@ -60,7 +60,7 @@ static unsigned int nNames = INVALID_VALUE;
 static unsigned int nJobs = INVALID_VALUE;
 
 static void SystemdMeter_done(ATTR_UNUSED Meter* this) {
-   free(systemState);
+   xFree(systemState, __func__, __FILE__, __LINE__);
    systemState = NULL;
 
 #ifdef BUILD_STATIC
@@ -267,7 +267,7 @@ static void updateViaExec(void) {
 }
 
 static void SystemdMeter_updateValues(Meter* this) {
-   free(systemState);
+   xFree(systemState, __func__, __FILE__, __LINE__);
    systemState = NULL;
    nFailedUnits = nInstalledJobs = nNames = nJobs = INVALID_VALUE;
 

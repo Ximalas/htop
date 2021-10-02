@@ -41,8 +41,8 @@ static void PCPProcessList_updateCPUcount(PCPProcessList* this) {
       cpus = pl->activeCPUs = 1;
    pl->existingCPUs = cpus;
 
-   free(this->percpu);
-   free(this->values);
+   xFree(this->percpu);
+   xFree(this->values);
 
    this->percpu = xCalloc(cpus, sizeof(pmAtomValue *));
    for (unsigned int i = 0; i < cpus; i++)
@@ -82,12 +82,12 @@ ProcessList* ProcessList_new(UsersTable* usersTable, Hashtable* dynamicMeters, H
 void ProcessList_delete(ProcessList* pl) {
    PCPProcessList* this = (PCPProcessList*) pl;
    ProcessList_done(pl);
-   free(this->values);
+   xFree(this->values);
    for (unsigned int i = 0; i < pl->existingCPUs; i++)
-      free(this->percpu[i]);
-   free(this->percpu);
-   free(this->cpu);
-   free(this);
+      xFree(this->percpu[i]);
+   xFree(this->percpu);
+   xFree(this->cpu);
+   xFree(this);
 }
 
 static inline long Metric_instance_s32(int metric, int pid, int offset, long fallback) {
@@ -136,7 +136,7 @@ static inline char Metric_instance_char(int metric, int pid, int offset, char fa
    pmAtomValue value;
    if (PCPMetric_instance(metric, pid, offset, &value, PM_TYPE_STRING)) {
       char uchar = value.cp[0];
-      free(value.cp);
+      xFree(value.cp);
       return uchar;
    }
    return fallback;
@@ -155,7 +155,7 @@ static void PCPProcessList_updateInfo(Process* process, int pid, int offset, cha
    if (!PCPMetric_instance(PCP_PROC_CMD, pid, offset, &value, PM_TYPE_STRING))
       value.cp = xStrdup("<unknown>");
    String_safeStrncpy(command, value.cp, commLen);
-   free(value.cp);
+   xFree(value.cp);
 
    process->pgrp = Metric_instance_u32(PCP_PROC_PGRP, pid, offset, 0);
    process->session = Metric_instance_u32(PCP_PROC_SESSION, pid, offset, 0);
@@ -250,7 +250,7 @@ static void PCPProcessList_readCtxtData(PCPProcess* pp, int pid, int offset) {
 
 static char* setString(PCPMetric metric, int pid, int offset, char* string) {
    if (string)
-      free(string);
+      xFree(string);
    pmAtomValue value;
    if (PCPMetric_instance(metric, pid, offset, &value, PM_TYPE_STRING))
       string = value.cp;
@@ -312,13 +312,13 @@ static void PCPProcessList_updateCmdline(Process* process, int pid, int offset, 
    int tokenEnd = length;
 
    Process_updateCmdline(process, command, tokenStart, tokenEnd);
-   free(value.cp);
+   xFree(value.cp);
 
    Process_updateComm(process, comm);
 
    if (PCPMetric_instance(PCP_PROC_EXE, pid, offset, &value, PM_TYPE_STRING)) {
       Process_updateExe(process, value.cp[0] ? value.cp : NULL);
-      free(value.cp);
+      xFree(value.cp);
    }
 }
 

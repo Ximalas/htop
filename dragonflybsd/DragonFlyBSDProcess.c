@@ -53,7 +53,7 @@ const ProcessFieldData Process_fields[LAST_PROCESSFIELD] = {
 };
 
 Process* DragonFlyBSDProcess_new(const Settings* settings) {
-   DragonFlyBSDProcess* this = xCalloc(1, sizeof(DragonFlyBSDProcess));
+   DragonFlyBSDProcess* this = xCalloc(1, sizeof(DragonFlyBSDProcess), __func__, __FILE__, __LINE__);
    Object_setClass(this, Class(DragonFlyBSDProcess));
    Process_init(&this->super, settings);
    return &this->super;
@@ -62,8 +62,8 @@ Process* DragonFlyBSDProcess_new(const Settings* settings) {
 void Process_delete(Object* cast) {
    DragonFlyBSDProcess* this = (DragonFlyBSDProcess*) cast;
    Process_done((Process*)cast);
-   free(this->jname);
-   free(this);
+   xFree(this->jname, __func__, __FILE__, __LINE__);
+   xFree(this, __func__, __FILE__, __LINE__);
 }
 
 static void DragonFlyBSDProcess_writeField(const Process* this, RichString* str, ProcessField field) {

@@ -32,7 +32,7 @@ const PanelClass Panel_class = {
 
 Panel* Panel_new(int x, int y, int w, int h, const ObjectClass* type, bool owner, FunctionBar* fuBar) {
    Panel* this;
-   this = xMalloc(sizeof(Panel));
+   this = xMalloc(sizeof(Panel), __func__, __FILE__, __LINE__);
    Object_setClass(this, Class(Panel));
    Panel_init(this, x, y, w, h, type, owner, fuBar);
    return this;
@@ -41,7 +41,7 @@ Panel* Panel_new(int x, int y, int w, int h, const ObjectClass* type, bool owner
 void Panel_delete(Object* cast) {
    Panel* this = (Panel*)cast;
    Panel_done(this);
-   free(this);
+   xFree(this, __func__, __FILE__, __LINE__);
 }
 
 void Panel_init(Panel* this, int x, int y, int w, int h, const ObjectClass* type, bool owner, FunctionBar* fuBar) {
@@ -66,7 +66,7 @@ void Panel_init(Panel* this, int x, int y, int w, int h, const ObjectClass* type
 
 void Panel_done(Panel* this) {
    assert (this != NULL);
-   free(this->eventHandlerState);
+   xFree(this->eventHandlerState, __func__, __FILE__, __LINE__);
    Vector_delete(this->items);
    FunctionBar_delete(this->defaultBar);
    RichString_delete(&this->header);
@@ -437,7 +437,7 @@ HandlerResult Panel_selectByTyping(Panel* this, int ch) {
    int size = Panel_size(this);
 
    if (!this->eventHandlerState)
-      this->eventHandlerState = xCalloc(100, sizeof(char));
+      this->eventHandlerState = xCalloc(100, sizeof(char), __func__, __FILE__, __LINE__);
    char* buffer = this->eventHandlerState;
 
    if (0 < ch && ch < 255 && isgraph((unsigned char)ch)) {

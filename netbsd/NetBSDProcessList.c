@@ -111,7 +111,7 @@ ProcessList* ProcessList_new(UsersTable* usersTable, Hashtable* dynamicMeters, H
    size_t size;
    char errbuf[_POSIX2_LINE_MAX];
 
-   NetBSDProcessList* npl = xCalloc(1, sizeof(NetBSDProcessList));
+   NetBSDProcessList* npl = xCalloc(1, sizeof(NetBSDProcessList), __func__, __FILE__, __LINE__);
    ProcessList* pl = (ProcessList*) npl;
    ProcessList_init(pl, Class(NetBSDProcess), usersTable, dynamicMeters, dynamicColumns, pidMatchList, userId);
 
@@ -141,10 +141,10 @@ void ProcessList_delete(ProcessList* this) {
       kvm_close(npl->kd);
    }
 
-   free(npl->cpuData);
+   xFree(npl->cpuData, __func__, __FILE__, __LINE__);
 
    ProcessList_done(this);
-   free(this);
+   xFree(this, __func__, __FILE__, __LINE__);
 }
 
 static void NetBSDProcessList_scanMemoryInfo(ProcessList* pl) {
@@ -187,14 +187,14 @@ static void NetBSDProcessList_updateCwd(const struct kinfo_proc2* kproc, Process
    char buffer[2048];
    size_t size = sizeof(buffer);
    if (sysctl(mib, 4, buffer, &size, NULL, 0) != 0) {
-      free(proc->procCwd);
+      xFree(proc->procCwd, __func__, __FILE__, __LINE__);
       proc->procCwd = NULL;
       return;
    }
 
    /* Kernel threads return an empty buffer */
    if (buffer[0] == '\0') {
-      free(proc->procCwd);
+      xFree(proc->procCwd, __func__, __FILE__, __LINE__);
       proc->procCwd = NULL;
       return;
    }
@@ -291,7 +291,7 @@ static void NetBSDProcessList_scanProcs(NetBSDProcessList* this) {
          proc->tty_nr = kproc->p_tdev;
          const char* name = ((dev_t)kproc->p_tdev != KERN_PROC_TTY_NODEV) ? devname(kproc->p_tdev, S_IFCHR) : NULL;
          if (!name) {
-            free(proc->tty_name);
+            xFree(proc->tty_name, __func__, __FILE__, __LINE__);
             proc->tty_name = NULL;
          } else {
             free_and_xStrdup(&proc->tty_name, name);

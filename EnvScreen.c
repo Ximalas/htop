@@ -14,13 +14,13 @@
 
 
 EnvScreen* EnvScreen_new(Process* process) {
-   EnvScreen* this = xMalloc(sizeof(EnvScreen));
+   EnvScreen* this = xMalloc(sizeof(EnvScreen), __func__, __FILE__, __LINE__);
    Object_setClass(this, Class(EnvScreen));
    return (EnvScreen*) InfoScreen_init(&this->super, process, NULL, LINES - 2, " ");
 }
 
 void EnvScreen_delete(Object* this) {
-   free(InfoScreen_done((InfoScreen*)this));
+   xFree(InfoScreen_done((InfoScreen*)this), __func__, __FILE__, __LINE__);
 }
 
 static void EnvScreen_draw(InfoScreen* this) {
@@ -37,7 +37,7 @@ static void EnvScreen_scan(InfoScreen* this) {
    if (env) {
       for (const char* p = env; *p; p = strrchr(p, 0) + 1)
          InfoScreen_addLine(this, p);
-      free(env);
+      xFree(env, __func__, __FILE__, __LINE__);
    }
    else {
       InfoScreen_addLine(this, "Could not read process environment.");

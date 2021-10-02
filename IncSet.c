@@ -61,7 +61,7 @@ static inline void IncMode_done(IncMode* mode) {
 }
 
 IncSet* IncSet_new(FunctionBar* bar) {
-   IncSet* this = xMalloc(sizeof(IncSet));
+   IncSet* this = xMalloc(sizeof(IncSet), __func__, __FILE__, __LINE__);
    IncMode_initSearch(&(this->modes[INC_SEARCH]));
    IncMode_initFilter(&(this->modes[INC_FILTER]));
    this->active = NULL;
@@ -74,7 +74,7 @@ IncSet* IncSet_new(FunctionBar* bar) {
 void IncSet_delete(IncSet* this) {
    IncMode_done(&(this->modes[0]));
    IncMode_done(&(this->modes[1]));
-   free(this);
+   xFree(this, __func__, __FILE__, __LINE__);
 }
 
 static void updateWeakPanel(const IncSet* this, Panel* panel, Vector* lines) {

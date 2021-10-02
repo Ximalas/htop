@@ -140,7 +140,7 @@ static void LinuxProcessList_initTtyDrivers(LinuxProcessList* this) {
       }
    }
    numDrivers++;
-   ttyDrivers = xRealloc(ttyDrivers, sizeof(TtyDriver) * numDrivers);
+   ttyDrivers = xRealloc(ttyDrivers, sizeof(TtyDriver) * numDrivers, __func__, __FILE__, __LINE__);
    ttyDrivers[numDrivers - 1].path = NULL;
    qsort(ttyDrivers, numDrivers - 1, sizeof(TtyDriver), sortTtyDrivers);
    this->ttyDrivers = ttyDrivers;
@@ -241,7 +241,7 @@ static void LinuxProcessList_updateCPUcount(ProcessList* super) {
 }
 
 ProcessList* ProcessList_new(UsersTable* usersTable, Hashtable* dynamicMeters, Hashtable* dynamicColumns, Hashtable* pidMatchList, uid_t userId) {
-   LinuxProcessList* this = xCalloc(1, sizeof(LinuxProcessList));
+   LinuxProcessList* this = xCalloc(1, sizeof(LinuxProcessList), __func__, __FILE__, __LINE__);
    ProcessList* pl = &(this->super);
 
    ProcessList_init(pl, Class(LinuxProcess), usersTable, dynamicMeters, dynamicColumns, pidMatchList, userId);
@@ -290,12 +290,12 @@ ProcessList* ProcessList_new(UsersTable* usersTable, Hashtable* dynamicMeters, H
 void ProcessList_delete(ProcessList* pl) {
    LinuxProcessList* this = (LinuxProcessList*) pl;
    ProcessList_done(pl);
-   free(this->cpuData);
+   xFree(this->cpuData, __func__, __FILE__, __LINE__);
    if (this->ttyDrivers) {
       for (int i = 0; this->ttyDrivers[i].path; i++) {
-         free(this->ttyDrivers[i].path);
+         xFree(this->ttyDrivers[i].path, __func__, __FILE__, __LINE__);
       }
-      free(this->ttyDrivers);
+      xFree(this->ttyDrivers, __func__, __FILE__, __LINE__);
    }
    #ifdef HAVE_DELAYACCT
    if (this->netlink_socket) {
@@ -303,7 +303,7 @@ void ProcessList_delete(ProcessList* pl) {
       nl_socket_free(this->netlink_socket);
    }
    #endif
-   free(this);
+   xFree(this, __func__, __FILE__, __LINE__);
 }
 
 static inline unsigned long long LinuxProcessList_adjustTime(unsigned long long t) {
@@ -636,7 +636,7 @@ static void LinuxProcessList_readMaps(LinuxProcess* process, openat_arg_t procFd
       if (calcSize) {
          LibraryData* libdata = Hashtable_get(ht, map_inode);
          if (!libdata) {
-            libdata = xCalloc(1, sizeof(LibraryData));
+            libdata = xCalloc(1, sizeof(LibraryData), __func__, __FILE__, __LINE__);
             Hashtable_put(ht, map_inode, libdata);
          }
 
@@ -739,7 +739,7 @@ static bool LinuxProcessList_readSmapsFile(LinuxProcess* process, openat_arg_t p
 
 static void LinuxProcessList_readOpenVZData(LinuxProcess* process, openat_arg_t procFd) {
    if (access(PROCDIR "/vz", R_OK) != 0) {
-      free(process->ctid);
+      xFree(process->ctid, __func__, __FILE__, __LINE__);
       process->ctid = NULL;
       process->vpid = process->super.pid;
       return;
@@ -747,7 +747,7 @@ static void LinuxProcessList_readOpenVZData(LinuxProcess* process, openat_arg_t 
 
    FILE* file = fopenat(procFd, "status", "r");
    if (!file) {
-      free(process->ctid);
+      xFree(process->ctid, __func__, __FILE__, __LINE__);
       process->ctid = NULL;
       process->vpid = process->super.pid;
       return;
@@ -816,7 +816,7 @@ static void LinuxProcessList_readOpenVZData(LinuxProcess* process, openat_arg_t 
    fclose(file);
 
    if (!foundEnvID) {
-      free(process->ctid);
+      xFree(process->ctid, __func__, __FILE__, __LINE__);
       process->ctid = NULL;
    }
 
@@ -831,7 +831,7 @@ static void LinuxProcessList_readCGroupFile(LinuxProcess* process, openat_arg_t 
    FILE* file = fopenat(procFd, "cgroup", "r");
    if (!file) {
       if (process->cgroup) {
-         free(process->cgroup);
+         xFree(process->cgroup, __func__, __FILE__, __LINE__);
          process->cgroup = NULL;
       }
       return;
@@ -957,7 +957,7 @@ static void LinuxProcessList_readCtxtData(LinuxProcess* process, openat_arg_t pr
 static void LinuxProcessList_readSecattrData(LinuxProcess* process, openat_arg_t procFd) {
    FILE* file = fopenat(procFd, "attr/current", "r");
    if (!file) {
-      free(process->secattr);
+      xFree(process->secattr, __func__, __FILE__, __LINE__);
       process->secattr = NULL;
       return;
    }
@@ -966,7 +966,7 @@ static void LinuxProcessList_readSecattrData(LinuxProcess* process, openat_arg_t
    const char* res = fgets(buffer, sizeof(buffer), file);
    fclose(file);
    if (!res) {
-      free(process->secattr);
+      xFree(process->secattr, __func__, __FILE__, __LINE__);
       process->secattr = NULL;
       return;
    }
@@ -992,7 +992,7 @@ static void LinuxProcessList_readCwd(LinuxProcess* process, openat_arg_t procFd)
 #endif
 
    if (r < 0) {
-      free(process->super.procCwd);
+      xFree(process->super.procCwd, __func__, __FILE__, __LINE__);
       process->super.procCwd = NULL;
       return;
    }
@@ -1296,14 +1296,14 @@ static char* LinuxProcessList_updateTtyDevice(TtyDriver* ttyDrivers, unsigned lo
          if (err == 0 && major(sstat.st_rdev) == maj && minor(sstat.st_rdev) == min) {
             return fullPath;
          }
-         free(fullPath);
+         xFree(fullPath, __func__, __FILE__, __LINE__);
 
          xAsprintf(&fullPath, "%s%d", ttyDrivers[i].path, idx);
          err = stat(fullPath, &sstat);
          if (err == 0 && major(sstat.st_rdev) == maj && minor(sstat.st_rdev) == min) {
             return fullPath;
          }
-         free(fullPath);
+         xFree(fullPath, __func__, __FILE__, __LINE__);
 
          if (idx == min) {
             break;
@@ -1468,7 +1468,7 @@ static bool LinuxProcessList_recurseProcTree(LinuxProcessList* this, openat_arg_
          goto errorReadingProcess;
 
       if (tty_nr != proc->tty_nr && this->ttyDrivers) {
-         free(proc->tty_name);
+         xFree(proc->tty_name, __func__, __FILE__, __LINE__);
          proc->tty_name = LinuxProcessList_updateTtyDevice(this->ttyDrivers, proc->tty_nr);
       }
 

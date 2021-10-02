@@ -28,25 +28,31 @@ void fail() {
    _exit(1); // Should never reach here
 }
 
-void* xMalloc(size_t size) {
+extern FILE* debug_log;
+
+void* xMalloc(size_t size, const char* fun, const char* file, int line) {
+   struct timeval t;
    assert(size > 0);
    void* data = malloc(size);
    if (!data) {
       fail();
    }
+   gettimeofday(&t, NULL);
+   fprintf(debug_log, "%p %ld.%06ld allocated %lu bytes %s():%s:%d\n", data, t.tv_sec, t.tv_usec, size, fun, file, line);
    return data;
 }
 
-void* xMallocArray(size_t nmemb, size_t size) {
+void* xMallocArray(size_t nmemb, size_t size, const char* fun, const char* file, int line) {
    assert(nmemb > 0);
    assert(size > 0);
    if (SIZE_MAX / nmemb < size) {
       fail();
    }
-   return xMalloc(nmemb * size);
+   return xMalloc(nmemb * size, fun, file, line);
 }
 
-void* xCalloc(size_t nmemb, size_t size) {
+void* xCalloc(size_t nmemb, size_t size, const char* fun, const char* file, int line) {
+   struct timeval t;
    assert(nmemb > 0);
    assert(size > 0);
    if (SIZE_MAX / nmemb < size) {
@@ -56,36 +62,41 @@ void* xCalloc(size_t nmemb, size_t size) {
    if (!data) {
       fail();
    }
+   gettimeofday(&t, NULL);
+   fprintf(debug_log, "%p %ld.%06ld allocated and zeroised %lu bytes %s():%s:%d\n", data, t.tv_sec, t.tv_usec, nmemb * size, fun, file, line);
    return data;
 }
 
-void* xRealloc(void* ptr, size_t size) {
+void* xRealloc(void* ptr, size_t size, const char* fun, const char* file, int line) {
+   struct timeval t;
    assert(size > 0);
    void* data = realloc(ptr, size); // deepcode ignore MemoryLeakOnRealloc: this goes to fail()
    if (!data) {
-      free(ptr);
+      xFree(ptr, __func__, __FILE__, __LINE__);
       fail();
    }
+   gettimeofday(&t, NULL);
+   fprintf(debug_log, "%p %ld.%06ld reallocated %lu bytes %s():%s:%d\n", data, t.tv_sec, t.tv_usec, size, fun, file, line);
    return data;
 }
 
-void* xReallocArray(void* ptr, size_t nmemb, size_t size) {
+void* xReallocArray(void* ptr, size_t nmemb, size_t size, const char* fun, const char* file, int line) {
    assert(nmemb > 0);
    assert(size > 0);
    if (SIZE_MAX / nmemb < size) {
       fail();
    }
-   return xRealloc(ptr, nmemb * size);
+   return xRealloc(ptr, nmemb * size, fun, file, line);
 }
 
-void* xReallocArrayZero(void* ptr, size_t prevmemb, size_t newmemb, size_t size) {
+void* xReallocArrayZero(void* ptr, size_t prevmemb, size_t newmemb, size_t size, const char* fun, const char* file, int line) {
    assert((ptr == NULL) == (prevmemb == 0));
 
    if (prevmemb == newmemb) {
       return ptr;
    }
 
-   void* ret = xReallocArray(ptr, newmemb, size);
+   void* ret = xReallocArray(ptr, newmemb, size, fun, file, line);
 
    if (newmemb > prevmemb) {
       memset((unsigned char*)ret + prevmemb * size, '\0', (newmemb - prevmemb) * size);
@@ -94,21 +105,28 @@ void* xReallocArrayZero(void* ptr, size_t prevmemb, size_t newmemb, size_t size)
    return ret;
 }
 
+void xFree(void* ptr, const char* fun, const char* file, int line) {
+   struct timeval t;
+   gettimeofday(&t, NULL);
+   fprintf(debug_log, "%p %ld.%06ld deallocated %s():%s:%d\n", ptr, t.tv_sec, t.tv_usec, fun, file, line);
+   free(ptr); // This should be the only call to vanilla free() in the entire program.
+}
+
 inline bool String_contains_i(const char* s1, const char* s2) {
    return strcasestr(s1, s2) != NULL;
 }
 
-char* String_cat(const char* s1, const char* s2) {
+char* String_cat(const char* s1, const char* s2, const char* fun, const char* file, int line) {
    const size_t l1 = strlen(s1);
    const size_t l2 = strlen(s2);
-   char* out = xMalloc(l1 + l2 + 1);
+   char* out = xMalloc(l1 + l2 + 1, fun, file, line);
    memcpy(out, s1, l1);
    memcpy(out + l1, s2, l2);
    out[l1 + l2] = '\0';
    return out;
 }
 
-char* String_trim(const char* in) {
+char* String_trim(const char* in, const char* fun, const char* file, int line) {
    while (in[0] == ' ' || in[0] == '\t' || in[0] == '\n') {
       in++;
    }
@@ -118,30 +136,30 @@ char* String_trim(const char* in) {
       len--;
    }
 
-   return xStrndup(in, len);
+   return xStrndup(in, len, fun, file, line);
 }
 
-char** String_split(const char* s, char sep, size_t* n) {
+char** String_split(const char* s, char sep, size_t* n, const char* fun, const char* file, int line) {
    const unsigned int rate = 10;
-   char** out = xCalloc(rate, sizeof(char*));
+   char** out = xCalloc(rate, sizeof(char*), fun, file, line);
    size_t ctr = 0;
    unsigned int blocks = rate;
    const char* where;
    while ((where = strchr(s, sep)) != NULL) {
       size_t size = (size_t)(where - s);
-      out[ctr] = xStrndup(s, size);
+      out[ctr] = xStrndup(s, size, fun, file, line);
       ctr++;
       if (ctr == blocks) {
          blocks += rate;
-         out = (char**) xRealloc(out, sizeof(char*) * blocks);
+         out = (char**) xRealloc(out, sizeof(char*) * blocks, fun, file, line);
       }
       s += size + 1;
    }
    if (s[0] != '\0') {
-      out[ctr] = xStrdup(s);
+      out[ctr] = xStrdup(s, fun, file, line);
       ctr++;
    }
-   out = xRealloc(out, sizeof(char*) * (ctr + 1));
+   out = xRealloc(out, sizeof(char*) * (ctr + 1), fun, file, line);
    out[ctr] = NULL;
 
    if (n)
@@ -150,17 +168,17 @@ char** String_split(const char* s, char sep, size_t* n) {
    return out;
 }
 
-void String_freeArray(char** s) {
+void String_freeArray(char** s, const char* fun, const char* file, int line) {
    if (!s) {
       return;
    }
    for (size_t i = 0; s[i] != NULL; i++) {
-      free(s[i]);
+      xFree(s[i], fun, file, line);
    }
-   free(s);
+   xFree(s, fun, file, line);
 }
 
-char* String_getToken(const char* line, const unsigned short int numMatch) {
+char* String_getToken(const char* line, const unsigned short int numMatch, const char* fun, const char* file, int sline) {
    const size_t len = strlen(line);
    char inWord = 0;
    unsigned short int count = 0;
@@ -184,18 +202,18 @@ char* String_getToken(const char* line, const unsigned short int numMatch) {
    }
 
    match[foundCount] = '\0';
-   return xStrdup(match);
+   return xStrdup(match, fun, file, sline);
 }
 
-char* String_readLine(FILE* fd) {
+char* String_readLine(FILE* fd, const char* fun, const char* file, int line) {
    const unsigned int step = 1024;
    unsigned int bufSize = step;
-   char* buffer = xMalloc(step + 1);
+   char* buffer = xMalloc(step + 1, fun, file, line);
    char* at = buffer;
    for (;;) {
       const char* ok = fgets(at, step + 1, fd);
       if (!ok) {
-         free(buffer);
+         xFree(buffer, fun, file, line);
          return NULL;
       }
       char* newLine = strrchr(at, '\n');
@@ -208,7 +226,7 @@ char* String_readLine(FILE* fd) {
          }
       }
       bufSize += step;
-      buffer = xRealloc(buffer, bufSize + 1);
+      buffer = xRealloc(buffer, bufSize + 1, fun, file, line);
       at = buffer + bufSize - step;
    }
 }
@@ -251,27 +269,33 @@ int xSnprintf(char* buf, size_t len, const char* fmt, ...) {
    return n;
 }
 
-char* xStrdup(const char* str) {
+char* xStrdup(const char* str, const char* fun, const char* file, int line) {
+   struct timeval t;
    char* data = strdup(str);
    if (!data) {
       fail();
    }
+   gettimeofday(&t, NULL);
+   fprintf(debug_log, "%p %ld.%06ld duplicated %lu bytes %s():%s:%d\n", data, t.tv_sec, t.tv_usec, strlen(str) + 1, fun, file, line);
    return data;
 }
 
-void free_and_xStrdup(char** ptr, const char* str) {
+void free_and_xStrdup(char** ptr, const char* str, const char* fun, const char* file, int line) {
    if (*ptr && String_eq(*ptr, str))
       return;
 
-   free(*ptr);
-   *ptr = xStrdup(str);
+   xFree(*ptr, fun, file, line);
+   *ptr = xStrdup(str, fun, file, line);
 }
 
-char* xStrndup(const char* str, size_t len) {
+char* xStrndup(const char* str, size_t len, const char* fun, const char* file, int line) {
+   struct timeval t;
    char* data = strndup(str, len);
    if (!data) {
       fail();
    }
+   gettimeofday(&t, NULL);
+   fprintf(debug_log, "%p %ld.%06ld duplicated %lu bytes %s():%s:%d\n", data, t.tv_sec, t.tv_usec, len + 1, fun, file, line);
    return data;
 }
 

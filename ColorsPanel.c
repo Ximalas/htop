@@ -43,7 +43,7 @@ static void ColorsPanel_delete(Object* object) {
    Panel* super = (Panel*) object;
    ColorsPanel* this = (ColorsPanel*) object;
    Panel_done(super);
-   free(this);
+   xFree(this, __func__, __FILE__, __LINE__);
 }
 
 static HandlerResult ColorsPanel_eventHandler(Panel* super, int ch) {

@@ -25,43 +25,43 @@ in the source distribution for its full text.
 
 
 void Settings_delete(Settings* this) {
-   free(this->filename);
-   free(this->fields);
+   xFree(this->filename, __func__, __FILE__, __LINE__);
+   xFree(this->fields, __func__, __FILE__, __LINE__);
    for (unsigned int i = 0; i < HeaderLayout_getColumns(this->hLayout); i++) {
       if (this->hColumns[i].names) {
          for (size_t j = 0; j < this->hColumns[i].len; j++)
-            free(this->hColumns[i].names[j]);
-         free(this->hColumns[i].names);
+            xFree(this->hColumns[i].names[j], __func__, __FILE__, __LINE__);
+         xFree(this->hColumns[i].names, __func__, __FILE__, __LINE__);
       }
-      free(this->hColumns[i].modes);
+      xFree(this->hColumns[i].modes, __func__, __FILE__, __LINE__);
    }
-   free(this->hColumns);
-   free(this);
+   xFree(this->hColumns, __func__, __FILE__, __LINE__);
+   xFree(this, __func__, __FILE__, __LINE__);
 }
 
 static void Settings_readMeters(Settings* this, const char* line, unsigned int column) {
-   char* trim = String_trim(line);
-   char** ids = String_split(trim, ' ', NULL);
-   free(trim);
+   char* trim = String_trim(line, __func__, __FILE__, __LINE__);
+   char** ids = String_split(trim, ' ', NULL, __func__, __FILE__, __LINE__);
+   xFree(trim, __func__, __FILE__, __LINE__);
    column = MINIMUM(column, HeaderLayout_getColumns(this->hLayout) - 1);
    this->hColumns[column].names = ids;
 }
 
 static void Settings_readMeterModes(Settings* this, const char* line, unsigned int column) {
-   char* trim = String_trim(line);
-   char** ids = String_split(trim, ' ', NULL);
-   free(trim);
+   char* trim = String_trim(line, __func__, __FILE__, __LINE__);
+   char** ids = String_split(trim, ' ', NULL, __func__, __FILE__, __LINE__);
+   xFree(trim, __func__, __FILE__, __LINE__);
    int len = 0;
    for (int i = 0; ids[i]; i++) {
       len++;
    }
    column = MINIMUM(column, HeaderLayout_getColumns(this->hLayout) - 1);
    this->hColumns[column].len = len;
-   int* modes = len ? xCalloc(len, sizeof(int)) : NULL;
+   int* modes = len ? xCalloc(len, sizeof(int), __func__, __FILE__, __LINE__) : NULL;
    for (int i = 0; i < len; i++) {
       modes[i] = atoi(ids[i]);
    }
-   String_freeArray(ids);
+   String_freeArray(ids, __func__, __FILE__, __LINE__);
    this->hColumns[column].modes = modes;
 }
 
@@ -71,56 +71,56 @@ static void Settings_defaultMeters(Settings* this, unsigned int initialCpuCount)
       sizes[1]++;
    }
    for (int i = 0; i < 2; i++) {
-      this->hColumns[i].names = xCalloc(sizes[i] + 1, sizeof(char*));
-      this->hColumns[i].modes = xCalloc(sizes[i], sizeof(int));
+      this->hColumns[i].names = xCalloc(sizes[i] + 1, sizeof(char*), __func__, __FILE__, __LINE__);
+      this->hColumns[i].modes = xCalloc(sizes[i], sizeof(int), __func__, __FILE__, __LINE__);
       this->hColumns[i].len = sizes[i];
    }
    int r = 0;
 
    if (initialCpuCount > 128) {
       // Just show the average, ricers need to config for impressive screenshots
-      this->hColumns[0].names[0] = xStrdup("CPU");
+      this->hColumns[0].names[0] = xStrdup("CPU", __func__, __FILE__, __LINE__);
       this->hColumns[0].modes[0] = BAR_METERMODE;
    } else if (initialCpuCount > 32) {
-      this->hColumns[0].names[0] = xStrdup("LeftCPUs8");
+      this->hColumns[0].names[0] = xStrdup("LeftCPUs8", __func__, __FILE__, __LINE__);
       this->hColumns[0].modes[0] = BAR_METERMODE;
-      this->hColumns[1].names[r] = xStrdup("RightCPUs8");
+      this->hColumns[1].names[r] = xStrdup("RightCPUs8", __func__, __FILE__, __LINE__);
       this->hColumns[1].modes[r++] = BAR_METERMODE;
    } else if (initialCpuCount > 16) {
-      this->hColumns[0].names[0] = xStrdup("LeftCPUs4");
+      this->hColumns[0].names[0] = xStrdup("LeftCPUs4", __func__, __FILE__, __LINE__);
       this->hColumns[0].modes[0] = BAR_METERMODE;
-      this->hColumns[1].names[r] = xStrdup("RightCPUs4");
+      this->hColumns[1].names[r] = xStrdup("RightCPUs4", __func__, __FILE__, __LINE__);
       this->hColumns[1].modes[r++] = BAR_METERMODE;
    } else if (initialCpuCount > 8) {
-      this->hColumns[0].names[0] = xStrdup("LeftCPUs2");
+      this->hColumns[0].names[0] = xStrdup("LeftCPUs2", __func__, __FILE__, __LINE__);
       this->hColumns[0].modes[0] = BAR_METERMODE;
-      this->hColumns[1].names[r] = xStrdup("RightCPUs2");
+      this->hColumns[1].names[r] = xStrdup("RightCPUs2", __func__, __FILE__, __LINE__);
       this->hColumns[1].modes[r++] = BAR_METERMODE;
    } else if (initialCpuCount > 4) {
-      this->hColumns[0].names[0] = xStrdup("LeftCPUs");
+      this->hColumns[0].names[0] = xStrdup("LeftCPUs", __func__, __FILE__, __LINE__);
       this->hColumns[0].modes[0] = BAR_METERMODE;
-      this->hColumns[1].names[r] = xStrdup("RightCPUs");
+      this->hColumns[1].names[r] = xStrdup("RightCPUs", __func__, __FILE__, __LINE__);
       this->hColumns[1].modes[r++] = BAR_METERMODE;
    } else {
-      this->hColumns[0].names[0] = xStrdup("AllCPUs");
+      this->hColumns[0].names[0] = xStrdup("AllCPUs", __func__, __FILE__, __LINE__);
       this->hColumns[0].modes[0] = BAR_METERMODE;
    }
-   this->hColumns[0].names[1] = xStrdup("Memory");
+   this->hColumns[0].names[1] = xStrdup("Memory", __func__, __FILE__, __LINE__);
    this->hColumns[0].modes[1] = BAR_METERMODE;
-   this->hColumns[0].names[2] = xStrdup("Swap");
+   this->hColumns[0].names[2] = xStrdup("Swap", __func__, __FILE__, __LINE__);
    this->hColumns[0].modes[2] = BAR_METERMODE;
-   this->hColumns[1].names[r] = xStrdup("Tasks");
+   this->hColumns[1].names[r] = xStrdup("Tasks", __func__, __FILE__, __LINE__);
    this->hColumns[1].modes[r++] = TEXT_METERMODE;
-   this->hColumns[1].names[r] = xStrdup("LoadAverage");
+   this->hColumns[1].names[r] = xStrdup("LoadAverage", __func__, __FILE__, __LINE__);
    this->hColumns[1].modes[r++] = TEXT_METERMODE;
-   this->hColumns[1].names[r] = xStrdup("Uptime");
+   this->hColumns[1].names[r] = xStrdup("Uptime", __func__, __FILE__, __LINE__);
    this->hColumns[1].modes[r++] = TEXT_METERMODE;
 }
 
 static void Settings_readFields(Settings* settings, const char* line) {
-   char* trim = String_trim(line);
-   char** ids = String_split(trim, ' ', NULL);
-   free(trim);
+   char* trim = String_trim(line, __func__, __FILE__, __LINE__);
+   char** ids = String_split(trim, ' ', NULL, __func__, __FILE__, __LINE__);
+   xFree(trim, __func__, __FILE__, __LINE__);
 
    settings->flags = 0;
 
@@ -129,7 +129,7 @@ static void Settings_readFields(Settings* settings, const char* line) {
       if (j >= UINT_MAX / sizeof(ProcessField))
          continue;
       if (j >= LAST_PROCESSFIELD) {
-         settings->fields = xRealloc(settings->fields, j * sizeof(ProcessField));
+         settings->fields = xRealloc(settings->fields, j * sizeof(ProcessField), __func__, __FILE__, __LINE__);
          memset(&settings->fields[j], 0, sizeof(ProcessField));
       }
 
@@ -154,7 +154,7 @@ static void Settings_readFields(Settings* settings, const char* line) {
       }
    }
    settings->fields[j] = NULL_PROCESSFIELD;
-   String_freeArray(ids);
+   String_freeArray(ids, __func__, __FILE__, __LINE__);
 }
 
 static bool Settings_read(Settings* this, const char* fileName, unsigned int initialCpuCount) {
@@ -165,16 +165,16 @@ static bool Settings_read(Settings* this, const char* fileName, unsigned int ini
    bool didReadMeters = false;
    bool didReadAny = false;
    for (;;) {
-      char* line = String_readLine(fd);
+      char* line = String_readLine(fd, __func__, __FILE__, __LINE__);
       if (!line) {
          break;
       }
       didReadAny = true;
       size_t nOptions;
-      char** option = String_split(line, '=', &nOptions);
-      free (line);
+      char** option = String_split(line, '=', &nOptions, __func__, __FILE__, __LINE__);
+      xFree(line, __func__, __FILE__, __LINE__);
       if (nOptions < 2) {
-         String_freeArray(option);
+         String_freeArray(option, __func__, __FILE__, __LINE__);
          continue;
       }
       if (String_eq(option[0], "config_reader_min_version")) {
@@ -184,7 +184,7 @@ static bool Settings_read(Settings* this, const char* fileName, unsigned int ini
             fprintf(stderr, "WARNING: %s specifies configuration format\n", fileName);
             fprintf(stderr, "         version v%d, but this %s binary only supports up to version v%d.\n", this->config_version, PACKAGE, CONFIG_READER_MIN_VERSION);
             fprintf(stderr, "         The configuration file will be downgraded to v%d when %s exits.\n", CONFIG_READER_MIN_VERSION, PACKAGE);
-            String_freeArray(option);
+            String_freeArray(option, __func__, __FILE__, __LINE__);
             fclose(fd);
             return false;
          }
@@ -275,8 +275,8 @@ static bool Settings_read(Settings* this, const char* fileName, unsigned int ini
          this->hLayout = isdigit((unsigned char)option[1][0]) ? ((HeaderLayout) atoi(option[1])) : HeaderLayout_fromName(option[1]);
          if (this->hLayout < 0 || this->hLayout >= LAST_HEADER_LAYOUT)
             this->hLayout = HF_TWO_50_50;
-         free(this->hColumns);
-         this->hColumns = xCalloc(HeaderLayout_getColumns(this->hLayout), sizeof(MeterColumnSetting));
+         xFree(this->hColumns, __func__, __FILE__, __LINE__);
+         this->hColumns = xCalloc(HeaderLayout_getColumns(this->hLayout), sizeof(MeterColumnSetting), __func__, __FILE__, __LINE__);
       } else if (String_eq(option[0], "left_meters")) {
          Settings_readMeters(this, option[1], 0);
          didReadMeters = true;
@@ -302,7 +302,7 @@ static bool Settings_read(Settings* this, const char* fileName, unsigned int ini
          this->topologyAffinity = !!atoi(option[1]);
       #endif
       }
-      String_freeArray(option);
+      String_freeArray(option, __func__, __FILE__, __LINE__);
    }
    fclose(fd);
    if (!didReadMeters) {
@@ -439,11 +439,11 @@ int Settings_write(const Settings* this, bool onCrash) {
 }
 
 Settings* Settings_new(unsigned int initialCpuCount, Hashtable* dynamicColumns) {
-   Settings* this = xCalloc(1, sizeof(Settings));
+   Settings* this = xCalloc(1, sizeof(Settings), __func__, __FILE__, __LINE__);
 
    this->dynamicColumns = dynamicColumns;
    this->hLayout = HF_TWO_50_50;
-   this->hColumns = xCalloc(HeaderLayout_getColumns(this->hLayout), sizeof(MeterColumnSetting));
+   this->hColumns = xCalloc(HeaderLayout_getColumns(this->hLayout), sizeof(MeterColumnSetting), __func__, __FILE__, __LINE__);
    this->sortKey = PERCENT_CPU;
    this->treeSortKey = PID;
    this->direction = -1;
@@ -478,7 +478,7 @@ Settings* Settings_new(unsigned int initialCpuCount, Hashtable* dynamicColumns) 
    #ifdef HAVE_LIBHWLOC
    this->topologyAffinity = false;
    #endif
-   this->fields = xCalloc(LAST_PROCESSFIELD + 1, sizeof(ProcessField));
+   this->fields = xCalloc(LAST_PROCESSFIELD + 1, sizeof(ProcessField), __func__, __FILE__, __LINE__);
    // TODO: turn 'fields' into a Vector,
    // (and ProcessFields into proper objects).
    this->flags = 0;
@@ -491,7 +491,7 @@ Settings* Settings_new(unsigned int initialCpuCount, Hashtable* dynamicColumns) 
    char* legacyDotfile = NULL;
    const char* rcfile = getenv("HTOPRC");
    if (rcfile) {
-      this->filename = xStrdup(rcfile);
+      this->filename = xStrdup(rcfile, __func__, __FILE__, __LINE__);
    } else {
       const char* home = getenv("HOME");
       if (!home)
@@ -501,23 +501,23 @@ Settings* Settings_new(unsigned int initialCpuCount, Hashtable* dynamicColumns) 
       char* configDir = NULL;
       char* htopDir = NULL;
       if (xdgConfigHome) {
-         this->filename = String_cat(xdgConfigHome, "/htop/htoprc");
-         configDir = xStrdup(xdgConfigHome);
-         htopDir = String_cat(xdgConfigHome, "/htop");
+         this->filename = String_cat(xdgConfigHome, "/htop/htoprc", __func__, __FILE__, __LINE__);
+         configDir = xStrdup(xdgConfigHome, __func__, __FILE__, __LINE__);
+         htopDir = String_cat(xdgConfigHome, "/htop", __func__, __FILE__, __LINE__);
       } else {
-         this->filename = String_cat(home, "/.config/htop/htoprc");
-         configDir = String_cat(home, "/.config");
-         htopDir = String_cat(home, "/.config/htop");
+         this->filename = String_cat(home, "/.config/htop/htoprc", __func__, __FILE__, __LINE__);
+         configDir = String_cat(home, "/.config", __func__, __FILE__, __LINE__);
+         htopDir = String_cat(home, "/.config/htop", __func__, __FILE__, __LINE__);
       }
-      legacyDotfile = String_cat(home, "/.htoprc");
+      legacyDotfile = String_cat(home, "/.htoprc", __func__, __FILE__, __LINE__);
       (void) mkdir(configDir, 0700);
       (void) mkdir(htopDir, 0700);
-      free(htopDir);
-      free(configDir);
+      xFree(htopDir, __func__, __FILE__, __LINE__);
+      xFree(configDir, __func__, __FILE__, __LINE__);
       struct stat st;
       int err = lstat(legacyDotfile, &st);
       if (err || S_ISLNK(st.st_mode)) {
-         free(legacyDotfile);
+         xFree(legacyDotfile, __func__, __FILE__, __LINE__);
          legacyDotfile = NULL;
       }
    }
@@ -536,7 +536,7 @@ Settings* Settings_new(unsigned int initialCpuCount, Hashtable* dynamicColumns) 
             unlink(legacyDotfile);
          }
       }
-      free(legacyDotfile);
+      xFree(legacyDotfile, __func__, __FILE__, __LINE__);
    }
    if (!ok) {
       ok = Settings_read(this, this->filename, initialCpuCount);
@@ -582,18 +582,18 @@ void Settings_setHeaderLayout(Settings* this, HeaderLayout hLayout) {
    unsigned int newColumns = HeaderLayout_getColumns(hLayout);
 
    if (newColumns > oldColumns) {
-      this->hColumns = xReallocArray(this->hColumns, newColumns, sizeof(MeterColumnSetting));
+      this->hColumns = xReallocArray(this->hColumns, newColumns, sizeof(MeterColumnSetting), __func__, __FILE__, __LINE__);
       memset(this->hColumns + oldColumns, 0, (newColumns - oldColumns) * sizeof(MeterColumnSetting));
    } else if (newColumns < oldColumns) {
       for (unsigned int i = newColumns; i < oldColumns; i++) {
          if (this->hColumns[i].names) {
             for (size_t j = 0; j < this->hColumns[i].len; j++)
-               free(this->hColumns[i].names[j]);
-            free(this->hColumns[i].names);
+               xFree(this->hColumns[i].names[j], __func__, __FILE__, __LINE__);
+            xFree(this->hColumns[i].names, __func__, __FILE__, __LINE__);
          }
-         free(this->hColumns[i].modes);
+         xFree(this->hColumns[i].modes, __func__, __FILE__, __LINE__);
       }
-      this->hColumns = xReallocArray(this->hColumns, newColumns, sizeof(MeterColumnSetting));
+      this->hColumns = xReallocArray(this->hColumns, newColumns, sizeof(MeterColumnSetting), __func__, __FILE__, __LINE__);
    }
 
    this->hLayout = hLayout;

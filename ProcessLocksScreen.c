@@ -21,7 +21,7 @@ in the source distribution for its full text.
 
 
 ProcessLocksScreen* ProcessLocksScreen_new(const Process* process) {
-   ProcessLocksScreen* this = xMalloc(sizeof(ProcessLocksScreen));
+   ProcessLocksScreen* this = xMalloc(sizeof(ProcessLocksScreen), __func__, __FILE__, __LINE__);
    Object_setClass(this, Class(ProcessLocksScreen));
    if (Process_isThread(process))
       this->pid = process->tgid;
@@ -31,7 +31,7 @@ ProcessLocksScreen* ProcessLocksScreen_new(const Process* process) {
 }
 
 void ProcessLocksScreen_delete(Object* this) {
-   free(InfoScreen_done((InfoScreen*)this));
+   xFree(InfoScreen_done((InfoScreen*)this), __func__, __FILE__, __LINE__);
 }
 
 static void ProcessLocksScreen_draw(InfoScreen* this) {
@@ -39,10 +39,10 @@ static void ProcessLocksScreen_draw(InfoScreen* this) {
 }
 
 static inline void FileLocks_Data_clear(FileLocks_Data* data) {
-   free(data->locktype);
-   free(data->exclusive);
-   free(data->readwrite);
-   free(data->filename);
+   xFree(data->locktype, __func__, __FILE__, __LINE__);
+   xFree(data->exclusive, __func__, __FILE__, __LINE__);
+   xFree(data->readwrite, __func__, __FILE__, __LINE__);
+   xFree(data->filename, __func__, __FILE__, __LINE__);
 }
 
 static void ProcessLocksScreen_scan(InfoScreen* this) {
@@ -86,10 +86,10 @@ static void ProcessLocksScreen_scan(InfoScreen* this) {
 
          FileLocks_LockData* old = ldata;
          ldata = ldata->next;
-         free(old);
+         xFree(old, __func__, __FILE__, __LINE__);
       }
    }
-   free(pdata);
+   xFree(pdata, __func__, __FILE__, __LINE__);
    Vector_insertionSort(this->lines);
    Vector_insertionSort(panel->items);
    Panel_setSelected(panel, idx);

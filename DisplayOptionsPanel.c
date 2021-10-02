@@ -26,7 +26,7 @@ static void DisplayOptionsPanel_delete(Object* object) {
    Panel* super = (Panel*) object;
    DisplayOptionsPanel* this = (DisplayOptionsPanel*) object;
    Panel_done(super);
-   free(this);
+   xFree(this, __func__, __FILE__, __LINE__);
 }
 
 static HandlerResult DisplayOptionsPanel_eventHandler(Panel* super, int ch) {

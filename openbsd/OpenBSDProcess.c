@@ -203,7 +203,7 @@ const ProcessFieldData Process_fields[LAST_PROCESSFIELD] = {
 };
 
 Process* OpenBSDProcess_new(const Settings* settings) {
-   OpenBSDProcess* this = xCalloc(sizeof(OpenBSDProcess), 1);
+   OpenBSDProcess* this = xCalloc(sizeof(OpenBSDProcess), 1, __func__, __FILE__, __LINE__);
    Object_setClass(this, Class(OpenBSDProcess));
    Process_init(&this->super, settings);
    return &this->super;
@@ -212,7 +212,7 @@ Process* OpenBSDProcess_new(const Settings* settings) {
 void Process_delete(Object* cast) {
    OpenBSDProcess* this = (OpenBSDProcess*) cast;
    Process_done((Process*)cast);
-   free(this);
+   xFree(this, __func__, __FILE__, __LINE__);
 }
 
 static void OpenBSDProcess_writeField(const Process* this, RichString* str, ProcessField field) {

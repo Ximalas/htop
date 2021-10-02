@@ -260,7 +260,7 @@ static int Platform_buildenv(void* accum, struct ps_prochandle* Phandle, uintptr
    (void) addr;
    size_t thissz = strlen(str);
    if ((thissz + 2) > (accump->capacity - accump->size)) {
-      accump->env = xRealloc(accump->env, accump->capacity *= 2);
+      accump->env = xRealloc(accump->env, accump->capacity *= 2, __func__, __FILE__, __LINE__);
    }
    if ((thissz + 2) > (accump->capacity - accump->size)) {
       return 1;
@@ -283,7 +283,7 @@ char* Platform_getProcessEnv(pid_t pid) {
 
    envBuilder.capacity = 4096;
    envBuilder.size     = 0;
-   envBuilder.env      = xMalloc(envBuilder.capacity);
+   envBuilder.env      = xMalloc(envBuilder.capacity, __func__, __FILE__, __LINE__);
 
    (void) Penv_iter(Phandle, Platform_buildenv, &envBuilder);
 

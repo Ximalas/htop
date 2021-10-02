@@ -217,9 +217,9 @@ static void CPUMeterCommonInit(Meter* this, int ncol) {
    unsigned int cpus = this->pl->existingCPUs;
    CPUMeterData* data = this->meterData;
    if (!data) {
-      data = this->meterData = xMalloc(sizeof(CPUMeterData));
+      data = this->meterData = xMalloc(sizeof(CPUMeterData), __func__, __FILE__, __LINE__);
       data->cpus = cpus;
-      data->meters = xCalloc(cpus, sizeof(Meter*));
+      data->meters = xCalloc(cpus, sizeof(Meter*), __func__, __FILE__, __LINE__);
    }
    Meter** meters = data->meters;
    int start, count;
@@ -258,8 +258,8 @@ static void AllCPUsMeter_done(Meter* this) {
    AllCPUsMeter_getRange(this, &start, &count);
    for (int i = 0; i < count; i++)
       Meter_delete((Object*)meters[i]);
-   free(data->meters);
-   free(data);
+   xFree(data->meters, __func__, __FILE__, __LINE__);
+   xFree(data, __func__, __FILE__, __LINE__);
 }
 
 static void SingleColCPUsMeter_init(Meter* this) {

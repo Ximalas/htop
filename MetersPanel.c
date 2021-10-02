@@ -44,7 +44,7 @@ static void MetersPanel_delete(Object* object) {
    Panel* super = (Panel*) object;
    MetersPanel* this = (MetersPanel*) object;
    Panel_done(super);
-   free(this);
+   xFree(this, __func__, __FILE__, __LINE__);
 }
 
 void MetersPanel_setMoving(MetersPanel* this, bool moving) {

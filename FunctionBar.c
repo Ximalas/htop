@@ -35,21 +35,21 @@ FunctionBar* FunctionBar_newEnterEsc(const char* enter, const char* esc) {
 }
 
 FunctionBar* FunctionBar_new(const char* const* functions, const char* const* keys, const int* events) {
-   FunctionBar* this = xCalloc(1, sizeof(FunctionBar));
-   this->functions = xCalloc(16, sizeof(char*));
+   FunctionBar* this = xCalloc(1, sizeof(FunctionBar), __func__, __FILE__, __LINE__);
+   this->functions = xCalloc(16, sizeof(char*), __func__, __FILE__, __LINE__);
    if (!functions) {
       functions = FunctionBar_FLabels;
    }
    for (int i = 0; i < 15 && functions[i]; i++) {
-      this->functions[i] = xStrdup(functions[i]);
+      this->functions[i] = xStrdup(functions[i], __func__, __FILE__, __LINE__);
    }
    if (keys && events) {
       this->staticData = false;
-      this->keys.keys = xCalloc(15, sizeof(char*));
-      this->events = xCalloc(15, sizeof(int));
+      this->keys.keys = xCalloc(15, sizeof(char*), __func__, __FILE__, __LINE__);
+      this->events = xCalloc(15, sizeof(int), __func__, __FILE__, __LINE__);
       int i = 0;
       while (i < 15 && functions[i]) {
-         this->keys.keys[i] = xStrdup(keys[i]);
+         this->keys.keys[i] = xStrdup(keys[i], __func__, __FILE__, __LINE__);
          this->events[i] = events[i];
          i++;
       }
@@ -65,24 +65,24 @@ FunctionBar* FunctionBar_new(const char* const* functions, const char* const* ke
 
 void FunctionBar_delete(FunctionBar* this) {
    for (int i = 0; i < 15 && this->functions[i]; i++) {
-      free(this->functions[i]);
+      xFree(this->functions[i], __func__, __FILE__, __LINE__);
    }
-   free(this->functions);
+   xFree(this->functions, __func__, __FILE__, __LINE__);
    if (!this->staticData) {
       for (int i = 0; i < this->size; i++) {
-         free(this->keys.keys[i]);
+         xFree(this->keys.keys[i], __func__, __FILE__, __LINE__);
       }
-      free(this->keys.keys);
-      free(this->events);
+      xFree(this->keys.keys, __func__, __FILE__, __LINE__);
+      xFree(this->events, __func__, __FILE__, __LINE__);
    }
-   free(this);
+   xFree(this, __func__, __FILE__, __LINE__);
 }
 
 void FunctionBar_setLabel(FunctionBar* this, int event, const char* text) {
    for (int i = 0; i < this->size; i++) {
       if (this->events[i] == event) {
-         free(this->functions[i]);
-         this->functions[i] = xStrdup(text);
+         xFree(this->functions[i], __func__, __FILE__, __LINE__);
+         this->functions[i] = xStrdup(text, __func__, __FILE__, __LINE__);
          break;
       }
    }

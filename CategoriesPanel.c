@@ -35,12 +35,12 @@ static void CategoriesPanel_delete(Object* object) {
    Panel* super = (Panel*) object;
    CategoriesPanel* this = (CategoriesPanel*) object;
    Panel_done(super);
-   free(this);
+   xFree(this, __func__, __FILE__, __LINE__);
 }
 
 static void CategoriesPanel_makeMetersPage(CategoriesPanel* this) {
    size_t columns = HeaderLayout_getColumns(this->scr->header->headerLayout);
-   MetersPanel** meterPanels = xMallocArray(columns, sizeof(MetersPanel*));
+   MetersPanel** meterPanels = xMallocArray(columns, sizeof(MetersPanel*), __func__, __FILE__, __LINE__);
 
    for (size_t i = 0; i < columns; i++) {
       char titleBuffer[32];

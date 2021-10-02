@@ -206,7 +206,7 @@ const PanelClass MainPanel_class = {
 MainPanel* MainPanel_new() {
    MainPanel* this = AllocThis(MainPanel);
    Panel_init((Panel*) this, 1, 1, 1, 1, Class(Process), false, FunctionBar_new(Settings_isReadonly() ? MainFunctions_ro : MainFunctions, NULL, NULL));
-   this->keys = xCalloc(KEY_MAX, sizeof(Htop_Action));
+   this->keys = xCalloc(KEY_MAX, sizeof(Htop_Action), __func__, __FILE__, __LINE__);
    this->inc = IncSet_new(MainPanel_getFunctionBar(this));
 
    Action_setBindings(this->keys);
@@ -224,6 +224,6 @@ void MainPanel_delete(Object* object) {
    MainPanel* this = (MainPanel*) object;
    Panel_done(super);
    IncSet_delete(this->inc);
-   free(this->keys);
-   free(this);
+   xFree(this->keys, __func__, __FILE__, __LINE__);
+   xFree(this, __func__, __FILE__, __LINE__);
 }

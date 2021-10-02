@@ -67,7 +67,7 @@ static const char* getDataForType(const OpenFiles_Data* data, char type) {
 }
 
 OpenFilesScreen* OpenFilesScreen_new(const Process* process) {
-   OpenFilesScreen* this = xMalloc(sizeof(OpenFilesScreen));
+   OpenFilesScreen* this = xMalloc(sizeof(OpenFilesScreen), __func__, __FILE__, __LINE__);
    Object_setClass(this, Class(OpenFilesScreen));
    if (Process_isThread(process)) {
       this->pid = process->tgid;
@@ -78,7 +78,7 @@ OpenFilesScreen* OpenFilesScreen_new(const Process* process) {
 }
 
 void OpenFilesScreen_delete(Object* this) {
-   free(InfoScreen_done((InfoScreen*)this));
+   xFree(InfoScreen_done((InfoScreen*)this), __func__, __FILE__, __LINE__);
 }
 
 static void OpenFilesScreen_draw(InfoScreen* this) {
@@ -86,7 +86,7 @@ static void OpenFilesScreen_draw(InfoScreen* this) {
 }
 
 static OpenFiles_ProcessData* OpenFilesScreen_getProcessData(pid_t pid) {
-   OpenFiles_ProcessData* pdata = xCalloc(1, sizeof(OpenFiles_ProcessData));
+   OpenFiles_ProcessData* pdata = xCalloc(1, sizeof(OpenFiles_ProcessData), __func__, __FILE__, __LINE__);
 
    int fdpair[2] = {0, 0};
    if (pipe(fdpair) == -1) {
@@ -129,7 +129,7 @@ static OpenFiles_ProcessData* OpenFilesScreen_getProcessData(pid_t pid) {
       return pdata;
    }
    for (;;) {
-      char* line = String_readLine(fd);
+      char* line = String_readLine(fd, __func__, __FILE__, __LINE__);
       if (!line) {
          break;
       }
@@ -138,7 +138,7 @@ static OpenFiles_ProcessData* OpenFilesScreen_getProcessData(pid_t pid) {
       switch (cmd) {
       case 'f':  /* file descriptor */
       {
-         OpenFiles_FileData* nextFile = xCalloc(1, sizeof(OpenFiles_FileData));
+         OpenFiles_FileData* nextFile = xCalloc(1, sizeof(OpenFiles_FileData), __func__, __FILE__, __LINE__);
          if (fdata == NULL) {
             pdata->files = nextFile;
          } else {
@@ -155,8 +155,8 @@ static OpenFiles_ProcessData* OpenFilesScreen_getProcessData(pid_t pid) {
       case 't':  /* file's type */
       {
          size_t index = getIndexForType(cmd);
-         free(item->data[index]);
-         item->data[index] = xStrdup(line + 1);
+         xFree(item->data[index], __func__, __FILE__, __LINE__);
+         item->data[index] = xStrdup(line + 1, __func__, __FILE__, __LINE__);
          break;
       }
       case 'c':  /* process command name  */
@@ -175,7 +175,7 @@ static OpenFiles_ProcessData* OpenFilesScreen_getProcessData(pid_t pid) {
          /* ignore */
          break;
       }
-      free(line);
+      xFree(line, __func__, __FILE__, __LINE__);
    }
    fclose(fd);
 
@@ -196,7 +196,7 @@ static OpenFiles_ProcessData* OpenFilesScreen_getProcessData(pid_t pid) {
 
 static void OpenFiles_Data_clear(OpenFiles_Data* data) {
    for (size_t i = 0; i < ARRAYSIZE(data->data); i++)
-      free(data->data[i]);
+      xFree(data->data[i], __func__, __FILE__, __LINE__);
 }
 
 static void OpenFilesScreen_scan(InfoScreen* this) {
@@ -227,11 +227,11 @@ static void OpenFilesScreen_scan(InfoScreen* this) {
          OpenFiles_Data_clear(data);
          OpenFiles_FileData* old = fdata;
          fdata = fdata->next;
-         free(old);
+         xFree(old, __func__, __FILE__, __LINE__);
       }
       OpenFiles_Data_clear(&pdata->data);
    }
-   free(pdata);
+   xFree(pdata, __func__, __FILE__, __LINE__);
    Vector_insertionSort(this->lines);
    Vector_insertionSort(panel->items);
    Panel_setSelected(panel, idx);

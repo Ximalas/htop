@@ -35,7 +35,7 @@ static PCPDynamicMetric* PCPDynamicMeter_lookupMetric(PCPDynamicMeters* meters, 
    for (size_t i = 0; i < meter->totalMetrics; i++) {
       metric = &meter->metrics[i];
       if (String_eq(metric->name, metricName)) {
-         free(metricName);
+         xFree(metricName);
          return metric;
       }
    }
@@ -75,10 +75,10 @@ static void PCPDynamicMeter_parseMetric(PCPDynamicMeters* meters, PCPDynamicMete
          xAsprintf(&note,
                    "%s: failed to parse expression in %s at line %u\n%s\n%s",
                    pmGetProgname(), path, line, error, pmGetProgname());
-         free(error);
+         xFree(error);
          errno = EINVAL;
          CRT_fatalError(note);
-         free(note);
+         xFree(note);
       }
    } else {
       /* this is a property of a dynamic metric - the metric expression */
@@ -106,7 +106,7 @@ static void PCPDynamicMeter_parseMetric(PCPDynamicMeters* meters, PCPDynamicMete
       } else if (String_eq(p, "label")) {
          char* label = String_cat(value, ": ");
          free_and_xStrdup(&metric->label, label);
-         free(label);
+         xFree(label);
       } else if (String_eq(p, "suffix")) {
          free_and_xStrdup(&metric->suffix, value);
       }
@@ -174,15 +174,15 @@ static void PCPDynamicMeter_parseFile(PCPDynamicMeters* meters, const char* path
 
       /* cleanup whitespace, skip comment lines */
       char* trimmed = String_trim(line);
-      free(line);
+      xFree(line);
       if (trimmed[0] == '#' || trimmed[0] == '\0') {
-         free(trimmed);
+         xFree(trimmed);
          continue;
       }
 
       size_t n;
       char** config = String_split(trimmed, '=', &n);
-      free(trimmed);
+      xFree(trimmed);
       if (config == NULL)
          continue;
 
@@ -200,7 +200,7 @@ static void PCPDynamicMeter_parseFile(PCPDynamicMeters* meters, const char* path
          char* caption = String_cat(value, ": ");
          if (caption) {
             free_and_xStrdup(&meter->super.caption, caption);
-            free(caption);
+            xFree(caption);
             caption = NULL;
          }
       } else if (value && meter && String_eq(key, "description")) {
@@ -220,8 +220,8 @@ static void PCPDynamicMeter_parseFile(PCPDynamicMeters* meters, const char* path
          PCPDynamicMeter_parseMetric(meters, meter, path, lineno, key, value);
       }
       String_freeArray(config);
-      free(value);
-      free(key);
+      xFree(value);
+      xFree(key);
    }
    fclose(file);
 }
@@ -238,7 +238,7 @@ static void PCPDynamicMeter_scanDir(PCPDynamicMeters* meters, char* path) {
 
       char* file = String_cat(path, dirent->d_name);
       PCPDynamicMeter_parseFile(meters, file);
-      free(file);
+      xFree(file);
    }
    closedir(dir);
 }
@@ -257,7 +257,7 @@ void PCPDynamicMeters_init(PCPDynamicMeters* meters) {
    if (override) {
       path = String_cat(override, "/meters/");
       PCPDynamicMeter_scanDir(meters, path);
-      free(path);
+      xFree(path);
    }
 
    /* next, search in home directory alongside htoprc */
@@ -269,30 +269,30 @@ void PCPDynamicMeters_init(PCPDynamicMeters* meters) {
       path = NULL;
    if (path) {
       PCPDynamicMeter_scanDir(meters, path);
-      free(path);
+      xFree(path);
    }
 
    /* next, search in the system meters directory */
    path = String_cat(sysconf, "/htop/meters/");
    PCPDynamicMeter_scanDir(meters, path);
-   free(path);
+   xFree(path);
 
    /* next, try the readonly system meters directory */
    path = String_cat(share, "/htop/meters/");
    PCPDynamicMeter_scanDir(meters, path);
-   free(path);
+   xFree(path);
 }
 
 static void PCPDynamicMeter_free(ATTR_UNUSED ht_key_t key, void* value, ATTR_UNUSED void* data) {
    PCPDynamicMeter* meter = (PCPDynamicMeter*) value;
    for (size_t i = 0; i < meter->totalMetrics; i++) {
-      free(meter->metrics[i].name);
-      free(meter->metrics[i].label);
-      free(meter->metrics[i].suffix);
+      xFree(meter->metrics[i].name);
+      xFree(meter->metrics[i].label);
+      xFree(meter->metrics[i].suffix);
    }
-   free(meter->metrics);
-   free(meter->super.caption);
-   free(meter->super.description);
+   xFree(meter->metrics);
+   xFree(meter->super.caption);
+   xFree(meter->super.description);
 }
 
 void PCPDynamicMeters_done(Hashtable* table) {
@@ -338,7 +338,7 @@ void PCPDynamicMeter_updateValues(PCPDynamicMeter* this, Meter* meter) {
       switch (desc->type) {
          case PM_TYPE_STRING:
             bytes += xSnprintf(buffer + bytes, size - bytes, "%s", atom.cp);
-            free(atom.cp);
+            xFree(atom.cp);
             break;
          case PM_TYPE_32:
             bytes += conv.dimSpace ?
@@ -414,7 +414,7 @@ void PCPDynamicMeter_display(PCPDynamicMeter* this, ATTR_UNUSED const Meter* met
       switch (desc->type) {
          case PM_TYPE_STRING:
             len = xSnprintf(buffer, sizeof(buffer), "%s", atom.cp);
-            free(atom.cp);
+            xFree(atom.cp);
             break;
          case PM_TYPE_32:
             len = conv.dimSpace ?

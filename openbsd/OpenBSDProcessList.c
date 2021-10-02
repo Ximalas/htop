@@ -99,7 +99,7 @@ ProcessList* ProcessList_new(UsersTable* usersTable, Hashtable* dynamicMeters, H
    size_t size;
    char errbuf[_POSIX2_LINE_MAX];
 
-   OpenBSDProcessList* opl = xCalloc(1, sizeof(OpenBSDProcessList));
+   OpenBSDProcessList* opl = xCalloc(1, sizeof(OpenBSDProcessList), __func__, __FILE__, __LINE__);
    ProcessList* pl = (ProcessList*) opl;
    ProcessList_init(pl, Class(OpenBSDProcess), usersTable, dynamicMeters, dynamicColumns, pidMatchList, userId);
 
@@ -131,10 +131,10 @@ void ProcessList_delete(ProcessList* this) {
       kvm_close(opl->kd);
    }
 
-   free(opl->cpuData);
+   xFree(opl->cpuData, __func__, __FILE__, __LINE__);
 
    ProcessList_done(this);
-   free(this);
+   xFree(this, __func__, __FILE__, __LINE__);
 }
 
 static void OpenBSDProcessList_scanMemoryInfo(ProcessList* pl) {
@@ -195,14 +195,14 @@ static void OpenBSDProcessList_updateCwd(const struct kinfo_proc* kproc, Process
    char buffer[2048];
    size_t size = sizeof(buffer);
    if (sysctl(mib, 3, buffer, &size, NULL, 0) != 0) {
-      free(proc->procCwd);
+      xFree(proc->procCwd, __func__, __FILE__, __LINE__);
       proc->procCwd = NULL;
       return;
    }
 
    /* Kernel threads return an empty buffer */
    if (buffer[0] == '\0') {
-      free(proc->procCwd);
+      xFree(proc->procCwd, __func__, __FILE__, __LINE__);
       proc->procCwd = NULL;
       return;
    }
@@ -314,7 +314,7 @@ static void OpenBSDProcessList_scanProcs(OpenBSDProcessList* this) {
          proc->tty_nr = kproc->p_tdev;
          const char* name = ((dev_t)kproc->p_tdev != NODEV) ? devname(kproc->p_tdev, S_IFCHR) : NULL;
          if (!name || String_eq(name, "??")) {
-            free(proc->tty_name);
+            xFree(proc->tty_name, __func__, __FILE__, __LINE__);
             proc->tty_name = NULL;
          } else {
             free_and_xStrdup(&proc->tty_name, name);
