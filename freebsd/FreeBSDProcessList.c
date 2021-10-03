@@ -444,6 +444,7 @@ static void FreeBSDProcessList_updateProcessName(kvm_t* kd, const struct kinfo_p
    *at = '\0';
 
    Process_updateCmdline(proc, cmdline, 0, end);
+
    xFree(cmdline, __func__, __FILE__, __LINE__); // Fixes a possible memory leak, see line 433 above.
 }
 
