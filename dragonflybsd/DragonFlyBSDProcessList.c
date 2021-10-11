@@ -346,6 +346,8 @@ static void DragonFlyBSDProcessList_updateProcessName(kvm_t* kd, const struct ki
    *at = '\0';
 
    Process_updateCmdline(proc, cmdline, 0, end);
+
+   free(cmdline);
 }
 
 static inline void DragonFlyBSDProcessList_scanJails(DragonFlyBSDProcessList* dfpl) {
