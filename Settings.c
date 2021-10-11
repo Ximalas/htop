@@ -99,7 +99,7 @@ static void Settings_defaultMeters(Settings* this, unsigned int initialCpuCount)
    xFree(this->hColumns, __func__, __FILE__, __LINE__);
 
    this->hLayout = HF_TWO_50_50;
-   this->hColumns = xCalloc(HeaderLayout_getColumns(this->hLayout), sizeof(MeterColumnSetting));
+   this->hColumns = xCalloc(HeaderLayout_getColumns(this->hLayout), sizeof(MeterColumnSetting), __func__, __FILE__, __LINE__);
    for (size_t i = 0; i < 2; i++) {
       this->hColumns[i].names = xCalloc(sizes[i] + 1, sizeof(char*), __func__, __FILE__, __LINE__);
       this->hColumns[i].modes = xCalloc(sizes[i], sizeof(int), __func__, __FILE__, __LINE__);
